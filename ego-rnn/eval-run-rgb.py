@@ -26,7 +26,7 @@ def main_run(dataset, model_state_dict, dataset_dir, seqLen, memSize):
 
     vid_seq_test = makeDataset(dataset_dir,
                                spatial_transform=spatial_transform,
-                               seqLen=seqLen, fmt='.jpg')
+                               seqLen=seqLen, fmt='.png')
 
     test_loader = torch.utils.data.DataLoader(vid_seq_test, batch_size=1,
                             shuffle=False, num_workers=2, pin_memory=True)
@@ -45,14 +45,17 @@ def main_run(dataset, model_state_dict, dataset_dir, seqLen, memSize):
     numCorr = 0
     true_labels = []
     predicted_labels = []
-    for j, (inputs, targets) in enumerate(test_loader):
-            inputVariable = Variable(inputs.permute(1, 0, 2, 3, 4).cuda(), volatile=True)
-            output_label, _ = model(inputVariable)
-            _, predicted = torch.max(output_label.data, 1)
-            numCorr += (predicted == targets.cuda()).sum()
-            true_labels.append(targets)
-            predicted_labels.append(predicted)
-    test_accuracy = (numCorr / test_samples) * 100
+
+    with torch.no_grad():
+      for j, (inputs, targets) in enumerate(test_loader):
+              inputVariable = Variable(inputs.permute(1, 0, 2, 3, 4).cuda())
+              output_label, _ = model(inputVariable)
+              _, predicted = torch.max(output_label.data, 1)
+              numCorr += (predicted == targets.cuda()).sum()
+              true_labels.append(targets)
+              predicted_labels.append(predicted)
+
+    test_accuracy = torch.true_divide(numCorr,test_samples) * 100
     print('Test Accuracy = {}%'.format(test_accuracy))
 
     cnf_matrix = confusion_matrix(true_labels, predicted_labels).astype(float)
@@ -65,7 +68,7 @@ def main_run(dataset, model_state_dict, dataset_dir, seqLen, memSize):
     plt.yticks(ticks, fontsize=6)
     plt.grid(True)
     plt.clim(0, 1)
-    plt.savefig(dataset + '-rgb.jpg', bbox_inches='tight')
+    plt.savefig(dataset + '-rgb.png', bbox_inches='tight')
     plt.show()
 
 def __main__():
