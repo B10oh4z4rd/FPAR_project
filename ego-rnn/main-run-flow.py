@@ -10,7 +10,7 @@ import argparse
 import sys
 
 
-def main_run(dataset, trainDir, valDir, outDir, stackSize, trainBatchSize, valBatchSize, numEpochs, lr1,
+def main_run(dataset, dataDir, trainDataset, valDataset, outDir, stackSize, trainBatchSize, valBatchSize, numEpochs, lr1,
              decay_factor, decay_step):
 
 
@@ -49,16 +49,16 @@ def main_run(dataset, trainDir, valDir, outDir, stackSize, trainBatchSize, valBa
     spatial_transform = Compose([Scale(256), RandomHorizontalFlip(), MultiScaleCornerCrop([1, 0.875, 0.75, 0.65625], 224),
                                  ToTensor(), normalize])
 
-    vid_seq_train = makeDataset(trainDir, spatial_transform=spatial_transform, sequence=False,
-                                stackSize=stackSize, fmt='.png')
+    vid_seq_train = makeDataset(dataDir, spatial_transform=spatial_transform, sequence=False,
+                                stackSize=stackSize, fmt='.png', dataset = trainDataset)
 
     print(f"loaded train dataset of length: {vid_seq_train.__len__()}")
     train_loader = torch.utils.data.DataLoader(vid_seq_train, batch_size=trainBatchSize,
                             shuffle=True, sampler=None, num_workers=4, pin_memory=True)
-    if valDir is not None:
+    if valDataset is not None:
 
-        vid_seq_val = makeDataset(valDir, spatial_transform=Compose([Scale(256), CenterCrop(224), ToTensor(), normalize]),
-                                   sequence=False, stackSize=stackSize, fmt='.png', phase='Test')
+        vid_seq_val = makeDataset(dataDir, spatial_transform=Compose([Scale(256), CenterCrop(224), ToTensor(), normalize]),
+                                   sequence=False, stackSize=stackSize, fmt='.png', phase='Test', dataset = valDataset)
 
         val_loader = torch.utils.data.DataLoader(vid_seq_val, batch_size=valBatchSize,
                                 shuffle=False, num_workers=2, pin_memory=True)
@@ -115,7 +115,7 @@ def main_run(dataset, trainDir, valDir, outDir, stackSize, trainBatchSize, valBa
         writer.add_scalar('train/accuracy', trainAccuracy, epoch+1)
         train_log_loss.write('Training loss after {} epoch = {}\n'.format(epoch+1, avg_loss))
         train_log_acc.write('Training accuracy after {} epoch = {}\n'.format(epoch+1, trainAccuracy))
-        if valDir is not None:
+        if valDataset is not None:
             if (epoch+1) % 1 == 0:
                 model.train(False)
                 val_loss_epoch = 0
@@ -126,13 +126,13 @@ def main_run(dataset, trainDir, valDir, outDir, stackSize, trainBatchSize, valBa
                     val_iter += 1
                     val_samples += inputs.size(0)
                     with torch.no_grad():
-                        inputVariable = Variable(inputs.to(DEVICE), volatile=True)
-                        labelVariable = Variable(targets.to(DEVICE), volatile=True)
+                        inputVariable = Variable(inputs.to(DEVICE))
+                        labelVariable = Variable(targets.to(DEVICE))
                     output_label, _ = model(inputVariable)
                     val_loss = loss_fn(output_label, labelVariable)
                     val_loss_epoch += val_loss.item()
                     _, predicted = torch.max(output_label.data, 1)
-                    numCorr += sum(predicted == targets).to(DEVICE)
+                    numCorr += (predicted == targets.to(DEVICE)).sum()
                 val_accuracy = (numCorr / val_samples) * 100
                 avg_val_loss = val_loss_epoch / val_iter
                 print('Validation: Epoch = {} | Loss = {} | Accuracy = {}'.format(epoch + 1, avg_val_loss, val_accuracy))
@@ -160,10 +160,11 @@ def main_run(dataset, trainDir, valDir, outDir, stackSize, trainBatchSize, valBa
 def __main__():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str, default='gtea61', help='Dataset')
-    parser.add_argument('--trainDatasetDir', type=str, default='./dataset/gtea_warped_flow_61/split2/train',
-                        help='Train set directory')
-    parser.add_argument('--valDatasetDir', type=str, default=None,
-                        help='Validation set directory')
+    parser.add_argument('--trainDataset', type=str, default='S1,S3,S4',
+                        help='Train set subjects')
+    parser.add_argument('--valDataset', type=str, default='S2',
+                        help='Validation set subjects')
+    parser.add_argument('--dataDir', type = str, default = '../../GTEA61', help = 'Directory containing processed images')
     parser.add_argument('--outDir', type=str, default='experiments', help='Directory to save results')
     parser.add_argument('--stackSize', type=int, default=5, help='Length of sequence')
     parser.add_argument('--trainBatchSize', type=int, default=32, help='Training batch size')
@@ -176,8 +177,8 @@ def __main__():
     args = parser.parse_args()
 
     dataset = args.dataset
-    trainDatasetDir = args.trainDatasetDir
-    valDatasetDir = args.valDatasetDir
+    trainDatasetDir = list(args.trainDataset.split(','))
+    valDatasetDir = list(args.valDataset.split(','))
     outDir = args.outDir
     stackSize = args.stackSize
     trainBatchSize = args.trainBatchSize
@@ -186,8 +187,8 @@ def __main__():
     lr1 = args.lr
     stepSize = args.stepSize
     decayRate = args.decayRate
-
-    main_run(dataset, trainDatasetDir, valDatasetDir, outDir, stackSize, trainBatchSize, valBatchSize, numEpochs, lr1,
+    dataDir = args.dataDir
+    main_run(dataset, dataDir, trainDatasetDir, valDatasetDir, outDir, stackSize, trainBatchSize, valBatchSize, numEpochs, lr1,
              decayRate, stepSize)
 
 __main__()

@@ -8,13 +8,16 @@ import glob
 import sys
 
 
-def gen_split(root_dir, stackSize, fmt = '.png'):
+def gen_split(root_dir, stackSize, fmt = '.png', dataset = []):
     DatasetX = []
     DatasetY = []
     Labels = []
     NumFrames = []
     root_dir = os.path.join(root_dir, 'flow_x_processed')
+    print(dataset)
     for dir_user in sorted(os.listdir(root_dir)):
+        if dir_user not in dataset:
+            continue
         class_id = 0
         dir = os.path.join(root_dir, dir_user)
         for target in sorted(os.listdir(dir)):
@@ -35,14 +38,14 @@ def gen_split(root_dir, stackSize, fmt = '.png'):
 
 class makeDataset(Dataset):
     def __init__(self, root_dir, spatial_transform=None, sequence=False, stackSize=5,
-                 train=True, numSeg = 1, fmt='.png', phase='train'):
+                 train=True, numSeg = 1, fmt='.png', phase='train', dataset = ['S1','S2','S3','S4']):
         """
         Args:
             root_dir (string): Directory with all the images.
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.imagesX, self.imagesY, self.labels, self.numFrames = gen_split(root_dir, stackSize, '*' + fmt)
+        self.imagesX, self.imagesY, self.labels, self.numFrames = gen_split(root_dir, stackSize, '*' + fmt, dataset)
         self.spatial_transform = spatial_transform
         self.train = train
         self.numSeg = numSeg
