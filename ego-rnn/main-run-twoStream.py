@@ -12,6 +12,10 @@ import argparse
 import sys
 
 
+##The dataset directory that you must pass is either the train or test directory of the flow x processed
+##part, the make dataset algorithm will them by itself search and assemble the dataset with respect to
+## flow y and flow x
+
 def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainDatasetDir, valDatasetDir, outDir,
              trainBatchSize, valBatchSize, lr1, numEpochs, decay_step, decay_factor):
 
@@ -52,7 +56,7 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
                                  ToTensor(), normalize])
 
     vid_seq_train = makeDataset(trainDatasetDir,spatial_transform=spatial_transform,
-                               sequence=False, numSeg=1, stackSize=stackSize, fmt='.jpg', seqLen=seqLen)
+                               sequence=False, numSeg=1, stackSize=stackSize, fmt='.png', seqLen=seqLen)
 
     train_loader = torch.utils.data.DataLoader(vid_seq_train, batch_size=trainBatchSize,
                             shuffle=True, num_workers=4, pin_memory=True)
@@ -61,7 +65,7 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
 
         vid_seq_val = makeDataset(valDatasetDir,
                                    spatial_transform=Compose([Scale(256), CenterCrop(224), ToTensor(), normalize]),
-                                   sequence=False, numSeg=1, stackSize=stackSize, fmt='.jpg', phase='Test',
+                                   sequence=False, numSeg=1, stackSize=stackSize, fmt='.png', phase='Test',
                                    seqLen=seqLen)
 
         val_loader = torch.utils.data.DataLoader(vid_seq_val, batch_size=valBatchSize,
@@ -152,9 +156,9 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
             optimizer_fn.step()
             _, predicted = torch.max(output_label.data, 1)
             numCorrTrain += (predicted == targets.cuda()).sum()
-            epoch_loss += loss.data[0]
+            epoch_loss += loss.item()
         avg_loss = epoch_loss / iterPerEpoch
-        trainAccuracy = (numCorrTrain / trainSamples) * 100
+        trainAccuracy = torch.true_divide(numCorrTrain,trainSamples) * 100
         print('Average training loss after {} epoch = {} '.format(epoch + 1, avg_loss))
         print('Training accuracy after {} epoch = {}% '.format(epoch + 1, trainAccuracy))
         writer.add_scalar('train/epoch_loss', avg_loss, epoch + 1)
@@ -174,10 +178,10 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
                     labelVariable = Variable(targets.cuda())
                     output_label = model(inputVariableFlow, inputVariableFrame)
                     loss = loss_fn(F.log_softmax(output_label, dim=1), labelVariable)
-                    val_loss_epoch += loss.data[0]
+                    val_loss_epoch += loss.item()
                     _, predicted = torch.max(output_label.data, 1)
                     numCorr += (predicted == labelVariable.data).sum()
-                val_accuracy = (numCorr / valSamples) * 100
+                val_accuracy = torch.true_divide(numCorr,valSamples) * 100
                 avg_val_loss = val_loss_epoch / val_iter
                 print('Val Loss after {} epochs, loss = {}'.format(epoch + 1, avg_val_loss))
                 print('Val Accuracy after {} epochs = {}%'.format(epoch + 1, val_accuracy))

@@ -7,6 +7,7 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 from makeDatasetTwoStream import *
 import argparse
+import numpy as np
 
 def main_run(dataset, model_state_dict, dataset_dir, stackSize, seqLen, memSize):
 
@@ -28,7 +29,7 @@ def main_run(dataset, model_state_dict, dataset_dir, stackSize, seqLen, memSize)
     spatial_transform = Compose([Scale(256), CenterCrop(224), ToTensor(), normalize])
 
     vid_seq_test = makeDataset(dataset_dir, spatial_transform=spatial_transform, sequence=False, numSeg=1,
-                               stackSize=stackSize, fmt='.jpg', phase='Test', seqLen=seqLen)
+                               stackSize=stackSize, fmt='.png', phase='Test', seqLen=seqLen)
 
     test_loader = torch.utils.data.DataLoader(vid_seq_test, batch_size=testBatchSize,
                             shuffle=False, num_workers=2, pin_memory=True)
@@ -50,15 +51,30 @@ def main_run(dataset, model_state_dict, dataset_dir, stackSize, seqLen, memSize)
 
     predicted_labels = []
     true_labels = []
-    for j, (inputFlow, inputFrame, targets) in enumerate(test_loader):
-        inputVariableFrame = Variable(inputFrame.permute(1, 0, 2, 3, 4).cuda(), volatile=True)
-        inputVariableFlow = Variable(inputFlow.cuda(), volatile=True)
-        output_label = model(inputVariableFlow, inputVariableFrame)
-        _, predictedTwoStream = torch.max(output_label.data, 1)
-        numCorrTwoStream += (predictedTwoStream == targets.cuda()).sum()
-        predicted_labels.append(predictedTwoStream)
-        true_labels.append(targets)
-    test_accuracyTwoStream = (numCorrTwoStream / test_samples) * 100
+    with torch.no_grad():
+      for j, (inputFlow, inputFrame, targets) in enumerate(test_loader):
+          inputVariableFrame = Variable(inputFrame.permute(1, 0, 2, 3, 4).cuda())
+          inputVariableFlow = Variable(inputFlow.cuda())
+          output_label = model(inputVariableFlow, inputVariableFrame)
+          _, predictedTwoStream = torch.max(output_label.data, 1)
+          numCorrTwoStream += (predictedTwoStream == targets.cuda()).sum()
+          predicted_labels.append(predictedTwoStream.item())
+          true_labels.append(targets.item())
+
+    test_accuracyTwoStream = torch.true_divide(numCorrTwoStream,test_samples) * 100
+
+
+    #Debugging output
+    '''
+    print(f'The class of predicted is {type(predicted_labels)}')
+    print(f'The class of the true labels is {type(true_labels)}')
+
+    print(f'Predicted {np.array(predicted_labels).shape}')
+    print(f'True {np.array(true_labels).shape}')
+
+    print(predicted_labels)
+    print(true_labels)'''
+    #End of debugging output
 
     cnf_matrix = confusion_matrix(true_labels, predicted_labels).astype(float)
     cnf_matrix_normalized = cnf_matrix / cnf_matrix.sum(axis=1)[:, np.newaxis]
