@@ -11,6 +11,7 @@ class attentionModel(nn.Module):
         super(attentionModel, self).__init__()
         self.num_classes = num_classes
         self.resNet = resnetMod.resnet34(True, True)
+        #End of convolutional, start of convlstm
         self.mem_size = mem_size
         self.weight_softmax = self.resNet.fc.weight
         self.lstm_cell = MyConvLSTMCell(512, mem_size)

@@ -115,7 +115,7 @@ class makeDataset(Dataset):
         inpSeqMmaps = []
         for i in np.linspace(1,numFrame, self.seqLen, endpoint=False):
           fl_name = vid_nameF +  '/' + 'mmaps' +'/' + 'map' + str(int(np.floor(i))).zfill(4) + self.fmt
-          img = Image.open(f1_name)
+          img = Image.open(fl_name)
           inpSeqMmaps.append(self.spatial_transform(img.convert('RGB')))
         inpSeqMmaps = torch.stack(inpSeqMmaps,0)
 
