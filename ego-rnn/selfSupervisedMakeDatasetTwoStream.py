@@ -113,10 +113,19 @@ class makeDataset(Dataset):
 
         #Adding the mmaps to the dataloader
         inpSeqMmaps = []
-        for i in np.linspace(1,numFrame, self.seqLen, endpoint=False):
-          fl_name = vid_nameF +  '/' + 'mmaps' +'/' + 'map' + str(int(np.floor(i))).zfill(4) + self.fmt
-          img = Image.open(fl_name)
-          inpSeqMmaps.append(self.spatial_transform(img.convert('RGB')))
+        try:
+          inpSeqMmaps = []
+          for i in np.linspace(1,numFrame, self.seqLen, endpoint=False):
+            fl_name = vid_nameF +  '/' + 'mmaps' +'/' + 'map' + str(int(np.floor(i))).zfill(4) + self.fmt
+            img = Image.open(fl_name)
+            inpSeqMmaps.append(self.spatial_transform(img.convert('RGB')))
+        except:
+            inpSeqMmaps = []
+            for i in np.linspace(2,numFrame, self.seqLen, endpoint=False):
+              fl_name = vid_nameF +  '/' + 'mmaps' +'/' + 'map' + str(int(np.floor(i))).zfill(4) + self.fmt
+              img = Image.open(fl_name)
+              inpSeqMmaps.append(self.spatial_transform(img.convert('RGB')))
+  
         inpSeqMmaps = torch.stack(inpSeqMmaps,0)
 
         return inpSeqSegs, inpSeqF, inpSeqMmaps ,label#, vid_nameF#, fl_name

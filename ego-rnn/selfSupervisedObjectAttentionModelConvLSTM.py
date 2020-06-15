@@ -24,7 +24,7 @@ class attentionModel(nn.Module):
         self.mmapPredictor = nn.Sequential()
         self.mmapPredictor.add_module('mmap_relu',nn.ReLU(True))
         self.mmapPredictor.add_module('convolution', nn.Conv2d(512, 100, kernel_size=1))
-        self.mmapPredictor.add_module('fc_1',nn.Linear(100*7*7,100*7*7))
+        self.mmapPredictor.add_module('fc_1',nn.Linear(22400*7,100*7*7))
         self.mmapPredictor.add_module('fc_2',nn.Linear(100*7*7,2*7*7))
 
         '''
@@ -39,6 +39,7 @@ class attentionModel(nn.Module):
     def forward(self, inputVariable):
         state = (Variable(torch.zeros((inputVariable.size(1), self.mem_size, 7, 7)).cuda()),
                  Variable(torch.zeros((inputVariable.size(1), self.mem_size, 7, 7)).cuda()))
+        map_predictions = []
         for t in range(inputVariable.size(0)):
             logit, feature_conv, feature_convNBN = self.resNet(inputVariable[t])
             bz, nc, h, w = feature_conv.size()
@@ -50,9 +51,8 @@ class attentionModel(nn.Module):
             attentionMAP = attentionMAP.view(attentionMAP.size(0), 1, 7, 7)
             attentionFeat = feature_convNBN * attentionMAP.expand_as(feature_conv)
             state = self.lstm_cell(attentionFeat, state)
+            map_predictions.append(self.mmapPredictor(attentionFeat))
         
-        _, features_conv, features_convNBN = self.resNet(inputVariable)
-        map_prediction = self.mmapPredictor(features_convNBN)
         feats1 = self.avgpool(state[1]).view(state[1].size(0), -1)
         feats = self.classifier(feats1)
-        return feats, feats1, map_prediction
+        return feats, feats1, map_predictions

@@ -3,7 +3,7 @@ from spatial_transforms import (Compose, ToTensor, CenterCrop, Scale, Normalize,
                                 RandomHorizontalFlip)
 from tensorboardX import SummaryWriter
 import torch.nn as nn
-from twoStreamModel import *
+from selfSupervisedTwoStreamModel import *
 from torch.autograd import Variable
 from torch.utils.data.sampler import WeightedRandomSampler
 from selfSupervisedMakeDatasetTwoStream import *
