@@ -12,6 +12,7 @@ import argparse
 import sys
 
 
+
 ##The dataset directory that you must pass is either the train or test directory of the flow x processed
 ##part, the make dataset algorithm will them by itself search and assemble the dataset with respect to
 ## flow y and flow x
@@ -74,6 +75,10 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
 
     model = twoStreamAttentionModel(flowModel=flowModel, frameModel=rgbModel, stackSize=stackSize, memSize=memSize,
                                     num_classes=num_classes)
+
+
+    #torch.autograd.set_detect_anomaly(True)
+
 
     for params in model.parameters():
         params.requires_grad = False
@@ -153,10 +158,18 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
             inputVariableFrame = Variable(inputFrame.permute(1, 0, 2, 3, 4).cuda())
             labelVariable = Variable(targets.cuda())
             output_label,mmapPrediction = model(inputVariableFlow, inputVariableFrame)
+            #print(f'Size for label variable: {labelVariable.size()}')
             loss = loss_fn(F.log_softmax(output_label, dim=1), labelVariable)
+            #We need to adjust the size for the input map
+            mmapPrediction = mmapPrediction.view(-1,2)
+            #print(f'Size for the map :{inputMmap.size()}')
+            #print(f'Size for the prediction :{mmapPrediction.size()}')
+            #inputMmap=inputMmap.permute(1,0,2,3,4)
+            inputMmap = torch.reshape(inputMmap, (-1,)).long()
+            #print(f'Size for the map flattened :{inputMmap.size()}')
             loss2 = loss_fn(mmapPrediction,inputMmap)
-            loss.backward()
-            loss2.backward()
+            total_loss = loss +loss2
+            total_loss.backward()
             optimizer_fn.step()
             _, predicted = torch.max(output_label.data, 1)
             numCorrTrain += (predicted == targets.cuda()).sum()
@@ -188,6 +201,8 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
                     inputVariableFrame = Variable(inputFrame.permute(1, 0, 2, 3, 4).cuda())
                     labelVariable = Variable(targets.cuda())
                     output_label, mmapPrediction = model(inputVariableFlow, inputVariableFrame)
+                    mmapPrediction = mmapPrediction.view(-1,2)
+                    inputMmap = torch.reshape(inputMmap, (-1,)).long()
                     loss2 = loss_fn(mmapPrediction,inputMmap)
                     loss = loss_fn(F.log_softmax(output_label, dim=1), labelVariable)
                     val_loss_epoch += loss.item()

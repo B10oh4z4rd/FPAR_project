@@ -8,6 +8,14 @@ import glob
 import sys
 
 
+from spatial_transforms import (Compose, ToTensor, CenterCrop, Scale, Normalize, MultiScaleCornerCrop,
+                                RandomHorizontalFlip)
+
+mean = [0.485, 0.456, 0.406]
+std = [0.229, 0.224, 0.225]
+normalize = Normalize(mean=mean, std=std)
+spatial_transform2 = Compose([Scale((7,7)), ToTensor(), normalize])
+
 def gen_split(root_dir, stackSize):
     DatasetX = []
     DatasetY = []
@@ -118,13 +126,13 @@ class makeDataset(Dataset):
           for i in np.linspace(1,numFrame, self.seqLen, endpoint=False):
             fl_name = vid_nameF +  '/' + 'mmaps' +'/' + 'map' + str(int(np.floor(i))).zfill(4) + self.fmt
             img = Image.open(fl_name)
-            inpSeqMmaps.append(self.spatial_transform(img.convert('RGB')))
+            inpSeqMmaps.append(spatial_transform2(img.convert('L')))
         except:
             inpSeqMmaps = []
             for i in np.linspace(2,numFrame, self.seqLen, endpoint=False):
               fl_name = vid_nameF +  '/' + 'mmaps' +'/' + 'map' + str(int(np.floor(i))).zfill(4) + self.fmt
               img = Image.open(fl_name)
-              inpSeqMmaps.append(self.spatial_transform(img.convert('RGB')))
+              inpSeqMmaps.append(spatial_transform2(img.convert('L'))) #Grayscale
   
         inpSeqMmaps = torch.stack(inpSeqMmaps,0)
 
