@@ -3,13 +3,14 @@ from spatial_transforms import (Compose, ToTensor, CenterCrop, Scale, Normalize,
                                 RandomHorizontalFlip)
 from tensorboardX import SummaryWriter
 import torch.nn as nn
-from twoStreamModel import *
+from selfSupervisedTwoStreamModel import *
 from torch.autograd import Variable
 from torch.utils.data.sampler import WeightedRandomSampler
-from makeDatasetTwoStream import *
+from selfSupervisedMakeDatasetTwoStream import *
 import argparse
 
 import sys
+
 
 
 ##The dataset directory that you must pass is either the train or test directory of the flow x processed
@@ -75,6 +76,10 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
     model = twoStreamAttentionModel(flowModel=flowModel, frameModel=rgbModel, stackSize=stackSize, memSize=memSize,
                                     num_classes=num_classes)
 
+
+    #torch.autograd.set_detect_anomaly(True)
+
+
     for params in model.parameters():
         params.requires_grad = False
 
@@ -139,54 +144,81 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
     for epoch in range(numEpochs):
         optim_scheduler.step()
         epoch_loss = 0
+        mmap_loss = 0
         numCorrTrain = 0
         iterPerEpoch = 0
         model.classifier.train(True)
         model.flowModel.layer4.train(True)
-        for j, (inputFlow, inputFrame, targets) in enumerate(train_loader):
+        for j, (inputFlow, inputFrame, inputMmap, targets) in enumerate(train_loader):
             train_iter += 1
             iterPerEpoch += 1
+            inputMmap = inputMmap.cuda()
             optimizer_fn.zero_grad()
             inputVariableFlow = Variable(inputFlow.cuda())
             inputVariableFrame = Variable(inputFrame.permute(1, 0, 2, 3, 4).cuda())
             labelVariable = Variable(targets.cuda())
-            output_label = model(inputVariableFlow, inputVariableFrame)
+            output_label,mmapPrediction = model(inputVariableFlow, inputVariableFrame)
+            #print(f'Size for label variable: {labelVariable.size()}')
             loss = loss_fn(F.log_softmax(output_label, dim=1), labelVariable)
-            loss.backward()
+            #We need to adjust the size for the input map
+            mmapPrediction = mmapPrediction.view(-1,2)
+            #print(f'Size for the map :{inputMmap.size()}')
+            #print(f'Size for the prediction :{mmapPrediction.size()}')
+            #inputMmap=inputMmap.permute(1,0,2,3,4)
+            inputMmap = torch.reshape(inputMmap, (-1,)).long()
+            #print(f'Size for the map flattened :{inputMmap.size()}')
+            loss2 = loss_fn(mmapPrediction,inputMmap)
+            total_loss = loss +loss2
+            total_loss.backward()
             optimizer_fn.step()
             _, predicted = torch.max(output_label.data, 1)
             numCorrTrain += (predicted == targets.cuda()).sum()
             epoch_loss += loss.item()
+            mmap_loss += loss2.item()
         avg_loss = epoch_loss / iterPerEpoch
+        avg_mmap_loss = mmap_loss / iterPerEpoch
         trainAccuracy = torch.true_divide(numCorrTrain,trainSamples) * 100
         print('Average training loss after {} epoch = {} '.format(epoch + 1, avg_loss))
         print('Training accuracy after {} epoch = {}% '.format(epoch + 1, trainAccuracy))
+        print('Mmap loss after {} epoch = {}% '.format(epoch + 1, avg_mmap_loss))
         writer.add_scalar('train/epoch_loss', avg_loss, epoch + 1)
+        writer.add_scalar('mmap_train_loss',avg_mmap_loss,epoch+1)
         writer.add_scalar('train/accuracy', trainAccuracy, epoch + 1)
+        train_log_loss.write('Training mmap loss after {} epoch= {}'.format(epoch+1,avg_mmap_loss))
         train_log_loss.write('Training loss after {} epoch = {}\n'.format(epoch + 1, avg_loss))
         train_log_acc.write('Training accuracy after {} epoch = {}\n'.format(epoch + 1, trainAccuracy))
         if valDatasetDir is not None:
             if (epoch + 1) % 1 == 0:
                 model.train(False)
+                val_mmap_loss = 0
                 val_loss_epoch = 0
                 val_iter = 0
                 numCorr = 0
-                for j, (inputFlow, inputFrame, targets) in enumerate(val_loader):
+                for j, (inputFlow, inputFrame , inputMmap, targets) in enumerate(val_loader):
                     val_iter += 1
+                    inputMmap = inputMmap.cuda()
                     inputVariableFlow = Variable(inputFlow.cuda())
                     inputVariableFrame = Variable(inputFrame.permute(1, 0, 2, 3, 4).cuda())
                     labelVariable = Variable(targets.cuda())
-                    output_label = model(inputVariableFlow, inputVariableFrame)
+                    output_label, mmapPrediction = model(inputVariableFlow, inputVariableFrame)
+                    mmapPrediction = mmapPrediction.view(-1,2)
+                    inputMmap = torch.reshape(inputMmap, (-1,)).long()
+                    loss2 = loss_fn(mmapPrediction,inputMmap)
                     loss = loss_fn(F.log_softmax(output_label, dim=1), labelVariable)
                     val_loss_epoch += loss.item()
+                    val_mmap_loss += loss2.item()
                     _, predicted = torch.max(output_label.data, 1)
                     numCorr += (predicted == labelVariable.data).sum()
                 val_accuracy = torch.true_divide(numCorr,valSamples) * 100
                 avg_val_loss = val_loss_epoch / val_iter
+                avg_mmap_val_loss = val_mmap_loss / val_iter
                 print('Val Loss after {} epochs, loss = {}'.format(epoch + 1, avg_val_loss))
                 print('Val Accuracy after {} epochs = {}%'.format(epoch + 1, val_accuracy))
+                print('Val MMap Loss after {} epochs, loss = {}'.format(epoch + 1, avg_mmap_val_loss))
                 writer.add_scalar('val/epoch_loss', avg_val_loss, epoch + 1)
+                writer.add_scalar('val mmap/epoch_loss', avg_mmap_val_loss, epoch + 1)
                 writer.add_scalar('val/accuracy', val_accuracy, epoch + 1)
+                val_log_loss.write('Val MMap Loss after {} epochs = {}\n'.format(epoch + 1, avg_mmap_val_loss))
                 val_log_loss.write('Val Loss after {} epochs = {}\n'.format(epoch + 1, avg_val_loss))
                 val_log_acc.write('Val Accuracy after {} epochs = {}%\n'.format(epoch + 1, val_accuracy))
                 if val_accuracy > min_accuracy:

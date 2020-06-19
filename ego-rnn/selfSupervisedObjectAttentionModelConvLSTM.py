@@ -5,13 +5,20 @@ from torch.nn import functional as F
 from torch.autograd import Variable
 from MyConvLSTMCell import *
 
+class Print(nn.Module):
+    def forward(self, x):
+        print(x.size())
+        return x
+
+class Flatten(nn.Module):
+    def forward(self, input):
+        return input.view(input.size(0), -1)
 
 class attentionModel(nn.Module):
     def __init__(self, num_classes=61, mem_size=512):
         super(attentionModel, self).__init__()
         self.num_classes = num_classes
         self.resNet = resnetMod.resnet34(True, True)
-        #End of convolutional, start of convlstm
         self.mem_size = mem_size
         self.weight_softmax = self.resNet.fc.weight
         self.lstm_cell = MyConvLSTMCell(512, mem_size)
@@ -19,6 +26,26 @@ class attentionModel(nn.Module):
         self.dropout = nn.Dropout(0.7)
         self.fc = nn.Linear(mem_size, self.num_classes)
         self.classifier = nn.Sequential(self.dropout, self.fc)
+
+
+        #Secondary task branch
+        self.mmapPredictor = nn.Sequential()
+        self.mmapPredictor.add_module('mmap_relu',nn.ReLU(True))
+#       self.mmapPredictor.add_module('print1',Print())
+        self.mmapPredictor.add_module('convolution', nn.Conv2d(512, 100, kernel_size=1))
+        #self.mmapPredictor.add_module('print2',Print())
+        self.mmapPredictor.add_module('flatten',Flatten())
+        self.mmapPredictor.add_module('fc_2',nn.Linear(100*7*7,2*7*7))
+        #self.mmapPredictor.add_module('print3',Print())
+
+        '''
+        feat (BS,512x7x7)  --> relu() = feat (BS,512x7x7)
+        feat (BS,512x7x7) --> CONV[100, k=1, p=0] = feat(BS,100x7x7)
+        feat(BS,100x7x7) --> feat(BS,100*7*7)
+        feat(BS,100*7*7) --> FC[100*7*7, 2*7*7] = feat(BS, 2*7*7)
+        feat(BS, 2*7*7) --> feat(BS, 2x7x7)
+        cross_entropy(feat, maps)
+        '''
 
     def forward(self, inputVariable):
         state = (Variable(torch.zeros((inputVariable.size(1), self.mem_size, 7, 7)).cuda()),
@@ -33,7 +60,15 @@ class attentionModel(nn.Module):
             attentionMAP = F.softmax(cam.squeeze(1), dim=1)
             attentionMAP = attentionMAP.view(attentionMAP.size(0), 1, 7, 7)
             attentionFeat = feature_convNBN * attentionMAP.expand_as(feature_conv)
+            if t == 0:
+              map_predictions = self.mmapPredictor(attentionFeat)
+            else:
+              prediction = self.mmapPredictor(attentionFeat)
+              map_predictions = torch.cat([map_predictions,prediction],dim=0) #map_predictions.append(self.mmapPredictor(attentionFeat))
+              
             state = self.lstm_cell(attentionFeat, state)
+
+        #map_predictions = torch.stack(map_predictions,0)
         feats1 = self.avgpool(state[1]).view(state[1].size(0), -1)
         feats = self.classifier(feats1)
-        return feats, feats1
+        return feats, feats1, map_predictions#Makes the list a stack

@@ -2,10 +2,10 @@ from __future__ import print_function, division
 from spatial_transforms import (Compose, ToTensor, CenterCrop, Scale, Normalize, MultiScaleCornerCrop,
                                 RandomHorizontalFlip, FiveCrops)
 from torch.autograd import Variable
-from twoStreamModel import *
+from selfSupervisedTwoStreamModel import *
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
-from makeDatasetTwoStream import *
+from selfSupervisedMakeDatasetTwoStream import *
 import argparse
 import numpy as np
 
@@ -52,10 +52,10 @@ def main_run(dataset, model_state_dict, dataset_dir, stackSize, seqLen, memSize)
     predicted_labels = []
     true_labels = []
     with torch.no_grad():
-      for j, (inputFlow, inputFrame, targets) in enumerate(test_loader):
+      for j, (inputFlow, inputFrame, _ , targets) in enumerate(test_loader):
           inputVariableFrame = Variable(inputFrame.permute(1, 0, 2, 3, 4).cuda())
           inputVariableFlow = Variable(inputFlow.cuda())
-          output_label = model(inputVariableFlow, inputVariableFrame)
+          output_label,_ = model(inputVariableFlow, inputVariableFrame)
           _, predictedTwoStream = torch.max(output_label.data, 1)
           numCorrTwoStream += (predictedTwoStream == targets.cuda()).sum()
           predicted_labels.append(predictedTwoStream.item())

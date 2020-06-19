@@ -6,7 +6,7 @@ import torch.nn as nn
 from twoStreamModel import *
 from torch.autograd import Variable
 from torch.utils.data.sampler import WeightedRandomSampler
-from makeDatasetTwoStream import *
+from selfSupervisedMakeDatasetTwoStream import *
 import argparse
 
 import sys
@@ -143,7 +143,7 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
         iterPerEpoch = 0
         model.classifier.train(True)
         model.flowModel.layer4.train(True)
-        for j, (inputFlow, inputFrame, targets) in enumerate(train_loader):
+        for j, (inputFlow, inputFrame, inputMmap, targets) in enumerate(train_loader):
             train_iter += 1
             iterPerEpoch += 1
             optimizer_fn.zero_grad()
@@ -171,7 +171,7 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
                 val_loss_epoch = 0
                 val_iter = 0
                 numCorr = 0
-                for j, (inputFlow, inputFrame, targets) in enumerate(val_loader):
+                for j, (inputFlow, inputFrame , inputMmap, targets) in enumerate(val_loader):
                     val_iter += 1
                     inputVariableFlow = Variable(inputFlow.cuda())
                     inputVariableFrame = Variable(inputFrame.permute(1, 0, 2, 3, 4).cuda())
