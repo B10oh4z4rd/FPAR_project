@@ -10,7 +10,7 @@ import argparse
 import sys
 
 
-def main_run(dataset, dataDir, trainDataset, valDataset, outDir, stackSize, trainBatchSize, valBatchSize, numEpochs, lr1,
+def main_run(dataset, trainDataset, valDataset, outDir, stackSize, trainBatchSize, valBatchSize, numEpochs, lr1,
              decay_factor, decay_step):
 
 
@@ -43,22 +43,21 @@ def main_run(dataset, dataDir, trainDataset, valDataset, outDir, stackSize, trai
     val_log_acc = open((model_folder + '/val_log_acc.txt'), 'w')
     valInstances = 0
 
-    # Data loader
+     # Data loader
     normalize = Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-
     spatial_transform = Compose([Scale(256), RandomHorizontalFlip(), MultiScaleCornerCrop([1, 0.875, 0.75, 0.65625], 224),
                                  ToTensor(), normalize])
 
-    vid_seq_train = makeDataset(dataDir, spatial_transform=spatial_transform, sequence=False,
-                                stackSize=stackSize, fmt='.png', dataset = trainDataset)
+    vid_seq_train = makeDataset(train_data_dir,
+                                spatial_transform=spatial_transform, seqLen=stackSize, fmt='.png')
 
-    print(f"loaded train dataset of length: {vid_seq_train.__len__()}")
     train_loader = torch.utils.data.DataLoader(vid_seq_train, batch_size=trainBatchSize,
-                            shuffle=True, sampler=None, num_workers=4, pin_memory=True)
-    if valDataset is not None:
+                            shuffle=True, num_workers=4, pin_memory=True)
+    if val_data_dir is not None:
 
-        vid_seq_val = makeDataset(dataDir, spatial_transform=Compose([Scale(256), CenterCrop(224), ToTensor(), normalize]),
-                                   sequence=False, stackSize=stackSize, fmt='.png', phase='Test', dataset = valDataset)
+        vid_seq_val = makeDataset(val_data_dir,
+                                   spatial_transform=Compose([Scale(256), CenterCrop(224), ToTensor(), normalize]),
+                                   seqLen=stackSize, fmt='.png')
 
         val_loader = torch.utils.data.DataLoader(vid_seq_val, batch_size=valBatchSize,
                                 shuffle=False, num_workers=2, pin_memory=True)
