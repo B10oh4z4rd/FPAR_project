@@ -5,6 +5,27 @@ from PIL import Image
 import numpy as np
 import glob
 import random
+import cv2
+
+def generate_HSVOpticalFlow(root_dir):
+    os.mkdirs(os.path.join(root_dir,"HSV_opticalFlow"))
+    prvs = os.path.join(root_dir,'rgb','rgb0001.png')
+    prvs = cv2.imread(prvs)
+    prvs = cv2.cvtColor(prvs,cv2.COLOR_BGR2GRAY)
+    for image_index in range(2,1+len(os.listdir(os.path.join(root_dir,'rgb')))):
+        frame_path = os.path.join(inst_dir,frame)
+        frame2 = cv2.imread(root_dir+f'/rgb/rgb{str(int(np.floor(image_index))).zfill(4)}.png')
+        next_frame = cv2.cvtColor(frame2,cv2.COLOR_BGR2GRAY)
+        flow = cv2.calcOpticalFlowFarneback(prvs,next_frame, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+        mag, ang = cv2.cartToPolar(flow[...,0], flow[...,1])
+        hsv[...,0] = ang*180/np.pi/2
+        hsv[...,2] = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
+        rgb = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
+        save_frame = f'hsv_of_{str(int(np.floor(image_index-1))).zfill(4)}.png'
+        save_dir = os.path.join(root_dir,'HSV_opticalFlow',save_frame)
+        #cv2.imwrite(save_dir,rgb)
+        print(f'generated optical flow {image_index-1} / {image_index}')
+    
 
 def gen_split(root_dir, stackSize, user, fmt = ".jpg"):
     fmt = "*" + fmt
@@ -13,8 +34,9 @@ def gen_split(root_dir, stackSize, user, fmt = ".jpg"):
     Dataset = []
     Labels = []
     NumFrames = []
+    
     try:
-        dir_user = os.path.join(root_dir, 'processed_frames2', user)
+        dir_user = os.path.join(root_dir,'processed_frames2', user)
         for target in sorted(os.listdir(dir_user)):
             if target.startswith('.'):
                 continue
@@ -22,9 +44,9 @@ def gen_split(root_dir, stackSize, user, fmt = ".jpg"):
             insts = sorted(os.listdir(target))
             if insts != []:
                 for inst in insts:
-                    if inst.startswith('.'):
-                        continue
-                    inst = os.path.join(target, inst, "rgb")
+                    inst = os.path.join(target, inst, "HSV_opticalFlow")
+                    if not (os.path.exists(inst)):
+                        generate_HSVOpticalFlow(inst)
                     numFrames = len(glob.glob1(inst, fmt))
                     if numFrames >= stackSize:
                         Dataset.append(inst)
@@ -33,19 +55,19 @@ def gen_split(root_dir, stackSize, user, fmt = ".jpg"):
             class_id += 1
     except:
         print('error')
-    
     return Dataset, Labels, NumFrames
 
 class makeDataset(Dataset):
     def __init__(self, root_dir, spatial_transform=None, seqLen=20,
                  train=True, mulSeg=False, numSeg=1,
-                 fmt='.jpg', users=[]):
+                 fmt='.png', users=[]):
+        
         self.images = []
         self.labels = []
         self.numFrames = []
-        
-        for user in users:
-            imgs, lbls, nfrms = gen_split(root_dir, 5, user, fmt)
+    
+        for us in users:
+            imgs, lbls, nfrms = gen_split(root_dir, 5, us, fmt)
             self.images.extend(imgs)
             self.labels.extend(lbls)
             self.numFrames.extend(nfrms)
@@ -73,7 +95,7 @@ class makeDataset(Dataset):
         inpSeq = []
         self.spatial_transform.randomize_parameters()
         for i in np.linspace(1, numFrame, self.seqLen):
-            fl_name = vid_name + '/' + 'rgb' + str(int(np.floor(i))).zfill(4) + self.fmt
+            fl_name = vid_name + '/' + 'hsv_of_' + str(int(np.floor(i))).zfill(4) + self.fmt
             img = Image.open(fl_name)
             inpSeq.append(self.spatial_transform(img.convert('RGB')))
         inpSeq = torch.stack(inpSeq, 0)
