@@ -37,7 +37,7 @@ def gen_split(root_dir, stackSize, fmt = '.png', dataset = []):
 
 
 class makeDataset(Dataset):
-    def __init__(self, root_dir, spatial_transform=None, sequence=False, stackSize=5,
+    def __init__(self, root_dir, spatial_transform=None, sequence=False, stackSize = 5, seqLen=16,
                  train=True, numSeg = 1, fmt='.png', phase='train', users = ['S1','S2','S3','S4']):
         """
         Args:
@@ -45,7 +45,7 @@ class makeDataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        self.imagesX, self.imagesY, self.labels, self.numFrames = gen_split(root_dir, stackSize, '*' + fmt, users)
+        self.imagesX, self.imagesY, self.labels, self.numFrames = gen_split(root_dir, seqLen, '*' + fmt, users)
         self.spatial_transform = spatial_transform
         self.train = train
         self.numSeg = numSeg

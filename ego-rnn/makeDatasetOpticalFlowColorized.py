@@ -58,7 +58,7 @@ def gen_split(root_dir, stackSize, user, fmt = ".jpg"):
     return Dataset, Labels, NumFrames
 
 class makeDataset(Dataset):
-    def __init__(self, root_dir, spatial_transform=None, seqLen=20,
+    def __init__(self, root_dir, spatial_transform=None, seqLen=20, stackSize = 5,
                  train=True, mulSeg=False, numSeg=1,
                  fmt='.png', users=[]):
         
