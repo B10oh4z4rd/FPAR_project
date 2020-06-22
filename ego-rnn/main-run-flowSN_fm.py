@@ -185,7 +185,7 @@ def __main__():
     stepSize = args.stepSize
     decayRate = args.decayRate
 
-    main_run(dataset, trainDatasetDir, valDatasetDir, stage1Dict, outDir, stackSize, trainBatchSize,
+    main_run(dataset, trainDatasetDir, valDatasetDir, outDir, stackSize, trainBatchSize,
              valBatchSize, numEpochs, lr1, decayRate, stepSize)
 
 __main__()
