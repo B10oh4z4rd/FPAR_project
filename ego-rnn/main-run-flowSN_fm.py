@@ -159,41 +159,33 @@ def main_run(dataset, dataDir, trainDataset, valDataset, outDir, stackSize, trai
 def __main__():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str, default='gtea61', help='Dataset')
-    parser.add_argument('--stage', type=int, default=1, help='Training stage')
     parser.add_argument('--trainDatasetDir', type=str, default='./dataset/gtea_warped_flow_61/split2/train',
                         help='Train set directory')
     parser.add_argument('--valDatasetDir', type=str, default=None,
                         help='Val set directory')
     parser.add_argument('--outDir', type=str, default='experiments', help='Directory to save results')
-    parser.add_argument('--stage1Dict', type=str, default='./experiments/gtea61/flow_surfaceNormals/stage1/best_model_state_dict.pth',
-                        help='Stage 1 model path')
-    parser.add_argument('--seqLen', type=int, default=25, help='Length of sequence')
+    parser.add_argument('--stackSize', type=int, default=5, help='Length of sequence')
     parser.add_argument('--trainBatchSize', type=int, default=32, help='Training batch size')
-    parser.add_argument('--valBatchSize', type=int, default=64, help='Validation batch size')
-    parser.add_argument('--numEpochs', type=int, default=300, help='Number of epochs')
-    parser.add_argument('--lr', type=float, default=1e-3, help='Learning rate')
-    parser.add_argument('--stepSize', type=float, default=[25, 75, 150], nargs="+", help='Learning rate decay step')
-    parser.add_argument('--decayRate', type=float, default=0.1, help='Learning rate decay rate')
-    parser.add_argument('--memSize', type=int, default=512, help='ConvLSTM hidden state size')
-
+    parser.add_argument('--valBatchSize', type=int, default=32, help='Validation batch size')
+    parser.add_argument('--numEpochs', type=int, default=750, help='Number of epochs')
+    parser.add_argument('--lr', type=float, default=1e-2, help='Learning rate')
+    parser.add_argument('--stepSize', type=float, default=[150, 300, 500], nargs="+", help='Learning rate decay step')
+    parser.add_argument('--decayRate', type=float, default=0.5, help='Learning rate decay rate')
     args = parser.parse_args()
 
     dataset = args.dataset
-    stage = args.stage
     trainDatasetDir = args.trainDatasetDir
     valDatasetDir = args.valDatasetDir
     outDir = args.outDir
-    stage1Dict = args.stage1Dict
-    seqLen = args.seqLen
+    stackSize = args.stackSize
     trainBatchSize = args.trainBatchSize
     valBatchSize = args.valBatchSize
     numEpochs = args.numEpochs
     lr1 = args.lr
     stepSize = args.stepSize
     decayRate = args.decayRate
-    memSize = args.memSize
 
-    main_run(dataset, stage, trainDatasetDir, valDatasetDir, stage1Dict, outDir, seqLen, trainBatchSize,
-             valBatchSize, numEpochs, lr1, decayRate, stepSize, memSize)
+    main_run(dataset, trainDatasetDir, valDatasetDir, stage1Dict, outDir, stackSize, trainBatchSize,
+             valBatchSize, numEpochs, lr1, decayRate, stepSize)
 
 __main__()
