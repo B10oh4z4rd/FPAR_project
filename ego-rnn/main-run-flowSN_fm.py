@@ -48,14 +48,14 @@ def main_run(dataset, trainDataset, valDataset, outDir, stackSize, trainBatchSiz
     spatial_transform = Compose([Scale(256), RandomHorizontalFlip(), MultiScaleCornerCrop([1, 0.875, 0.75, 0.65625], 224),
                                  ToTensor(), normalize])
 
-    vid_seq_train = makeDataset(train_data_dir,
+    vid_seq_train = makeDataset(trainDataset,
                                 spatial_transform=spatial_transform, seqLen=stackSize, fmt='.png')
 
     train_loader = torch.utils.data.DataLoader(vid_seq_train, batch_size=trainBatchSize,
                             shuffle=True, num_workers=4, pin_memory=True)
     if val_data_dir is not None:
 
-        vid_seq_val = makeDataset(val_data_dir,
+        vid_seq_val = makeDataset(valDataset,
                                    spatial_transform=Compose([Scale(256), CenterCrop(224), ToTensor(), normalize]),
                                    seqLen=stackSize, fmt='.png')
 
