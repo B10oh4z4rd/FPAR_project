@@ -94,8 +94,6 @@ class makeDataset(Dataset):
         label = self.labels[idx]
         numFrame = self.numFrames[idx]
         inpSeqSegs = []
-        hsv = np.zeros_like(frame)
-        hsv[...,1] = 255
         self.spatial_transform.randomize_parameters()
         if self.sequence is True:
             if numFrame <= self.stackSize:
@@ -106,11 +104,12 @@ class makeDataset(Dataset):
                 inpSeq = []
                 for k in range(self.stackSize):
                     i = k + int(startFrame)
-                    fl_name = vid_nameX + '/flow_x_' + str(int(round(i))).zfill(5) + self.fmt
-                    
+                    fl_name = vid_nameX + '/flow_x_' + str(int(round(i))).zfill(5) + self.fmt                    
                     flow_x = cv2.imread(f1_name,cv2.IMREAD_GRAYSCALE).astype(np.float32)
                     flow_y = cv2.imread(f1_name.replace('flow_x','flow_y'),cv2.IMREAD_GRAYSCALE).astype(np.float32)
                     mag, ang = cv2.cartToPolar(flow_x, flow_y)
+                    hsv = np.zeros_like(flow_x)
+                    hsv[...,1] = 255
                     hsv[...,0] = ang*180/np.pi/2
                     hsv[...,2] = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
                     rgb = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
