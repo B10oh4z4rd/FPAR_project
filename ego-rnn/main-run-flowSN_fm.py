@@ -53,7 +53,7 @@ def main_run(dataset, trainDataset, valDataset, outDir, stackSize, trainBatchSiz
 
     train_loader = torch.utils.data.DataLoader(vid_seq_train, batch_size=trainBatchSize,
                             shuffle=True, num_workers=4, pin_memory=True)
-    if val_data_dir is not None:
+    if valDataset is not None:
 
         vid_seq_val = makeDataset(valDataset,
                                    spatial_transform=Compose([Scale(256), CenterCrop(224), ToTensor(), normalize]),
