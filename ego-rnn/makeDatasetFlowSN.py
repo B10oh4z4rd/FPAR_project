@@ -7,12 +7,14 @@ import glob
 import random
 
 
-def gen_split(root_dir, stackSize, fmt):
+def gen_split(root_dir, stackSize, fmt,users):
     Dataset = []
     Labels = []
     NumFrames = []
     #root_dir = os.path.join(root_dir, 'frames')
     for dir_user in sorted(os.listdir(root_dir)):
+        if dir_user not in users:
+            continue
         class_id = 0
         dir = os.path.join(root_dir, dir_user)
         for target in sorted(os.listdir(dir)):
@@ -36,9 +38,9 @@ def gen_split(root_dir, stackSize, fmt):
 
 class makeDataset(Dataset):
     def __init__(self, root_dir ,spatial_transform=None, seqLen=20,
-                 train=True, mulSeg=False, numSeg=1, fmt='.png'):
+                 train=True, mulSeg=False, numSeg=1, fmt='.png', users = []):
 
-        self.images, self.labels, self.numFrames = gen_split(root_dir, 5, fmt)
+        self.images, self.labels, self.numFrames = gen_split(root_dir, 5, fmt, users)
         self.spatial_transform = spatial_transform
         self.train = train
         self.mulSeg = mulSeg
