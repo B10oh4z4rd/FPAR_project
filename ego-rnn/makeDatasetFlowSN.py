@@ -58,7 +58,7 @@ class makeDataset(Dataset):
         inpSeq = []
         self.spatial_transform.randomize_parameters()
         for i in np.linspace(1, numFrame, self.seqLen, endpoint=False):
-            fl_name = vid_name + '/' + 'flow_surfaceNormals' + str(int(np.floor(i))).zfill(4) + self.fmt
+            fl_name = vid_name + '/' + 'flow_surfaceNormal' + str(int(np.floor(i))).zfill(4) + self.fmt
             img = Image.open(fl_name)
             inpSeq.append(self.spatial_transform(img.convert('RGB')))
         inpSeq = torch.stack(inpSeq, 0)
