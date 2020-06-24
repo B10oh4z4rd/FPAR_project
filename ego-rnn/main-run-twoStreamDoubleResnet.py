@@ -85,10 +85,14 @@ def main_run(dataset, flowModel, rgbSNModel, stackSize, seqLen, memSize, trainDa
         params.requires_grad = True
         train_params += [params]
 
-    for params in model.frameModel.lstm_cell.parameters():
+    for params in model.frameModel.lstm_cell_x.parameters():
         train_params += [params]
         params.requires_grad = True
 
+    for params in model.frameModel.lstm_cell_y.parameters():
+        train_params += [params]
+        params.requires_grad = True
+        
     for params in model.frameModel.resNet1.layer4[0].conv1.parameters():
         params.requires_grad = True
         train_params += [params]
