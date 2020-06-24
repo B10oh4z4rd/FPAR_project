@@ -108,13 +108,13 @@ class makeDataset(Dataset):
                     flow_x = cv2.imread(f1_name,cv2.IMREAD_GRAYSCALE).astype(np.float32)
                     flow_y = cv2.imread(f1_name.replace('flow_x','flow_y'),cv2.IMREAD_GRAYSCALE).astype(np.float32)
                     mag, ang = cv2.cartToPolar(flow_x, flow_y)
-                    hsv = np.zeros_like(flow_x)
+                    hsv = np.zeros((flow_x.shape[0],flow_x.shape[1],3)).astype(np.uint8)
                     hsv[...,1] = 255
                     hsv[...,0] = ang*180/np.pi/2
                     hsv[...,2] = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
                     rgb = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
                     im_pil = Image.fromarray(rgb)#conversion to a pil image to apply transform
-                    inpSeq.append(self.spatial_transform(im_pil))
+                    inpSeq.append(self.spatial_transform(im_pil.convert('RGB')))
                 inpSeqSegs.append(torch.stack(inpSeq, 0).squeeze())
             inpSeqSegs = torch.stack(inpSeqSegs, 0)
             return inpSeqSegs, label
@@ -129,15 +129,17 @@ class makeDataset(Dataset):
             inpSeq = []
             for k in range(self.stackSize):
                 i = k + int(startFrame)
-                fl_name = vid_nameX + '/flow_x_' + str(int(round(i))).zfill(5) + self.fmt
+                f1_name = vid_nameX + '/flow_x_' + str(int(round(i))).zfill(5) + self.fmt
                 flow_x = cv2.imread(f1_name,cv2.IMREAD_GRAYSCALE).astype(np.float32)
                 flow_y = cv2.imread(f1_name.replace('flow_x','flow_y'),cv2.IMREAD_GRAYSCALE).astype(np.float32)
                 mag, ang = cv2.cartToPolar(flow_x, flow_y)
+                hsv = np.zeros((flow_x.shape[0],flow_x.shape[1],3)).astype(np.uint8)
+                hsv[...,1] = 255
                 hsv[...,0] = ang*180/np.pi/2
                 hsv[...,2] = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
                 rgb = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
                 im_pil = Image.fromarray(rgb)#conversion to a pil im
-                inpSeq.append(im_pil)
+                inpSeq.append(self.spatial_transform(im_pil.convert('RGB')))
             inpSeqSegs = torch.stack(inpSeq, 0).squeeze(1)
             return inpSeqSegs, label#, fl_name
 

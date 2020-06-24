@@ -104,7 +104,7 @@ class makeDataset(Dataset):
                 inpSeq = []
                 for k in range(self.stackSize):
                     i = k + int(startFrame)
-                    fl_name = vid_nameX + '/flow_x_' + str(int(round(i))).zfill(5) + self.fmt
+                    f1_name = vid_nameX + '/flow_x_' + str(int(round(i))).zfill(5) + self.fmt
                     #img = Image.open(fl_name)
                     #img = self.spatial_transform(img.convert('L'), inv=True, flow=True)
                     #open_cv_image = numpy.array(pil_image) 
@@ -113,10 +113,10 @@ class makeDataset(Dataset):
                     im_gray_x = cv2.imread(f1_name, cv2.IMREAD_GRAYSCALE)
                     im_color_x = cv2.applyColorMap(im_gray_x, cv2.COLORMAP_JET)   
                     # fl_names.append(fl_name)
-                    fl_name = vid_nameY + '/flow_y_' + str(int(round(i))).zfill(5) + self.fmt
+                    f1_name = vid_nameY + '/flow_y_' + str(int(round(i))).zfill(5) + self.fmt
                     im_gray_y = cv2.imread(f1_name, cv2.IMREAD_GRAYSCALE)
                     im_color_y = cv2.applyColorMap(im_gray_y, cv2.COLORMAP_JET)   
-                    im_max = np.maximum(im_color,im_color2) #fusion of the 2 images to obtain a single frame
+                    im_max = np.maximum(im_color_x,im_color_y) #fusion of the 2 images to obtain a single frame
                     im_pil = Image.fromarray(im_max)#conversion to a pil image to apply transform
                     inpSeq.append(self.spatial_transform(im_pil))
                 inpSeqSegs.append(torch.stack(inpSeq, 0).squeeze())
@@ -133,15 +133,16 @@ class makeDataset(Dataset):
             inpSeq = []
             for k in range(self.stackSize):
                 i = k + int(startFrame)
-                fl_name = vid_nameX + '/flow_x_' + str(int(round(i))).zfill(5) + self.fmt
+                f1_name = vid_nameX + '/flow_x_' + str(int(round(i))).zfill(5) + self.fmt
                 im_gray_x = cv2.imread(f1_name, cv2.IMREAD_GRAYSCALE)
                 im_color_x = cv2.applyColorMap(im_gray_x, cv2.COLORMAP_JET)   
                 # fl_names.append(fl_name)
-                fl_name = vid_nameY + '/flow_y_' + str(int(round(i))).zfill(5) + self.fmt
+                f1_name = vid_nameY + '/flow_y_' + str(int(round(i))).zfill(5) + self.fmt
                 im_gray_y = cv2.imread(f1_name, cv2.IMREAD_GRAYSCALE)
                 im_color_y = cv2.applyColorMap(im_gray_y, cv2.COLORMAP_JET)   
-                im_max = np.maximum(im_color,im_color2)
-                inpSeq.append(im_max)
+                im_max = np.maximum(im_color_x,im_color_y)
+                im_pil = Image.fromarray(im_max)#conversion to a pil image to apply transform
+                inpSeq.append(self.spatial_transform(im_pil))
             inpSeqSegs = torch.stack(inpSeq, 0).squeeze(1)
             return inpSeqSegs, label#, fl_name
 

@@ -3,14 +3,16 @@ from objectAttentionModelConvLSTM import *
 from spatial_transforms import (Compose, ToTensor, CenterCrop, Scale, Normalize, MultiScaleCornerCrop,
                                 RandomHorizontalFlip)
 from tensorboardX import SummaryWriter
-from makeDatasetOpticalFlowColorized import makeDataset# as makeDatasetOFC #optical flow
-from makeDatasetFlowHSVMapped import makeDataset# as makeDatasetWFC #warped flow
-from makeDatasetFlowSN import makeDataset# as makeDatasetFlowSN #warped flow surface normal
-from makeDatasetFlowColorized import makeDataset# as makeDatasetFlowCJ #warped flow colorjet
+#from makeDatasetOpticalFlowColorized import makeDataset# as makeDatasetOFC #optical flow
+#from makeDatasetFlowHSVMapped import makeDataset# as makeDatasetWFC #warped flow
+#from makeDatasetFlowSN import makeDataset# as makeDatasetFlowSN #warped flow surface normal
+#from makeDatasetFlowColorized import makeDataset# as makeDatasetFlowCJ #warped flow colorjet
 
 import argparse
 import sys
 import numpy as np
+import os
+import cv2
 
 def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, trainBatchSize,
              valBatchSize, numEpochs, lr1, decay_factor, decay_step, memSize,color):
@@ -24,16 +26,16 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
         sys.exit()
     os.makedirs(model_folder)
     
-    if color is 'opticalHSV':
+    if color == 'opticalHSV':
         from makeDatasetOpticalFlowColorized import makeDataset# as makeDatasetOFC #optical flow
-    elif color is 'warpedHSV':
+    elif color == 'warpedHSV':
         from makeDatasetFlowHSVMapped import makeDataset# as makeDatasetWFC #warped flow
-    elif color is 'surfaceNormal':
+    elif color == 'surfaceNormal':
         from makeDatasetFlowSN import makeDataset# as makeDatasetFlowSN #warped flow surface normal
-    elif color is 'colorJet':
+    elif color == 'colorJet':
         from makeDatasetFlowColorized import makeDataset#
     else:
-        print('error')
+        print(color,' is not valid')
         exit(-1)
     # Log files
     writer = SummaryWriter(model_folder)
@@ -123,7 +125,9 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
     model.lstm_cell.train(True)
 
     model.classifier.train(True)
-    model.cuda()
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(device)
+    model.to(device)
 
     loss_fn = nn.CrossEntropyLoss()
 
@@ -264,7 +268,7 @@ def __main__():
     stepSize = args.stepSize
     decayRate = args.decayRate
     memSize = args.memSize
-    colorization = args.color
+    color = args.color
 
     main_run(stage, trainDatasetDir, valDatasetDir, stage1Dict, outDir, seqLen, trainBatchSize,
              valBatchSize, numEpochs, lr1, decayRate, stepSize, memSize,color)

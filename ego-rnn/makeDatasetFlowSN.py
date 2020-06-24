@@ -11,7 +11,7 @@ def gen_split(root_dir, stackSize, fmt,users):
     Dataset = []
     Labels = []
     NumFrames = []
-    #root_dir = os.path.join(root_dir, 'frames')
+    root_dir = os.path.join(root_dir, 'processed_frames2')
     for dir_user in sorted(os.listdir(root_dir)):
         if dir_user not in users:
             continue
@@ -58,7 +58,7 @@ class makeDataset(Dataset):
         inpSeq = []
         self.spatial_transform.randomize_parameters()
         for i in np.linspace(1, numFrame, self.seqLen, endpoint=False):
-            fl_name = vid_name + '/' + 'flow_surfaceNormals' + str(int(np.floor(i))).zfill(4) + self.fmt
+            fl_name = vid_name + '/' + 'flow_surfaceNormal_' + str(int(np.floor(i))).zfill(4) + self.fmt
             img = Image.open(fl_name)
             inpSeq.append(self.spatial_transform(img.convert('RGB')))
         inpSeq = torch.stack(inpSeq, 0)
