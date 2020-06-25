@@ -27,7 +27,7 @@ def gen_split(root_dir, stackSize, user, fmt = ".jpg"):
                         continue
                     inst_rgb  = os.path.join(target, inst, "rgb")
                     inst_SN  = os.path.join(target, inst, "flow_surfaceNormals")
-                    numFrames = len(glob.glob1(inst, fmt))
+                    numFrames = len(glob.glob1(inst_rgb, fmt))
                     if numFrames >= stackSize:
                         Dataset.append(inst_rgb)
                         DatasetSN.append(inst_SN)
@@ -36,7 +36,6 @@ def gen_split(root_dir, stackSize, user, fmt = ".jpg"):
             class_id += 1
     except:
         print('error')
-    
     return Dataset, DatasetSN, Labels, NumFrames
 
 class makeDataset(Dataset):
@@ -44,12 +43,14 @@ class makeDataset(Dataset):
                  train=True, mulSeg=False, numSeg=1,
                  fmt='.jpg', users=[]):
         self.images = []
+        self.surNorms = []
         self.labels = []
         self.numFrames = []
         
         for user in users:
-            imgs, lbls, nfrms = gen_split(root_dir, 5, user, fmt)
+            imgs, surfs, lbls, nfrms = gen_split(root_dir, 5, user, fmt)
             self.images.extend(imgs)
+            self.surNorms.extend(surfs)
             self.labels.extend(lbls)
             self.numFrames.extend(nfrms)
         
@@ -70,6 +71,7 @@ class makeDataset(Dataset):
     
     def __getitem__(self, idx):
         vid_name = self.images[idx]
+        SN_name = self.surNorms[idx]
         label = self.labels[idx]
         numFrame = self.numFrames[idx]
         
@@ -80,7 +82,7 @@ class makeDataset(Dataset):
             fl_name = vid_name + '/' + 'rgb' + str(int(np.floor(i))).zfill(4) + self.fmt
             img = Image.open(fl_name)
             inpSeq.append(self.spatial_transform(img.convert('RGB')))
-            flsn_name = vid_name + '/' + 'flow_surfaceNormal_' + str(int(np.floor(i))).zfill(4) + self.fmt
+            flsn_name = SN_name + '/' + 'flow_surfaceNormal_' + str(int(np.floor(i))).zfill(4) + self.fmt
             imgsn = Image.open(flsn_name)
             inpSeqSN.append(self.spatial_transform(imgsn.convert('RGB')))
         inpSeq = torch.stack(inpSeq, 0)

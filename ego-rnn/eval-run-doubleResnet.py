@@ -24,7 +24,7 @@ def main_run(model_state_dict, dataset_dir, seqLen, memSize, out_dir):
     test_loader = torch.utils.data.DataLoader(vid_seq_test, batch_size=1,
                             shuffle=False, num_workers=2, pin_memory=True)
     
-    model = attentionModel(num_classes=num_classes, mem_size=memSize)
+    model = attentionDoubleResnet(num_classes=num_classes, mem_size=memSize)
     model.load_state_dict(torch.load(model_state_dict))
     
     for params in model.parameters():
@@ -44,7 +44,7 @@ def main_run(model_state_dict, dataset_dir, seqLen, memSize, out_dir):
         for inputs, inputsSN, targets in test_loader:
             inputVariable = Variable(inputs.permute(1, 0, 2, 3, 4).cuda())
             inputSNVariable = Variable(inputsSN.permute(1, 0, 2, 3, 4).cuda())
-            output_label, _ = model(inputVariable)
+            output_label, _ = model(inputVariable,inputSNVariable)
             
             _, predicted = torch.max(output_label.data, 1)
             numCorr += (predicted == targets.cuda()).sum()

@@ -49,18 +49,18 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
     
     train_params = []
     if stage == 1:
-        model = attentionModel(num_classes=num_classes, mem_size=memSize)
+        model = attentionDoubleResnet(num_classes=num_classes, mem_size=memSize)
         model.train(False)
         for params in model.parameters():
             params.requires_grad = False
     else: # stage == 2
-        model = attentionModel(num_classes=num_classes, mem_size=memSize)
+        model = attentionDoubleResnet(num_classes=num_classes, mem_size=memSize)
         model.load_state_dict(torch.load(stage1_dict))
         model.train(False)
         
         for params in model.classifier.parameters():
-        params.requires_grad = True
-        train_params += [params]
+            params.requires_grad = True
+            train_params += [params]
 
         for params in model.frameModel.lstm_cell_x.parameters():
             train_params += [params]
@@ -175,7 +175,8 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
         trainSamples = 0
         iterPerEpoch = 0
         
-        model.lstm_cell.train(True)
+        model.lstm_cell_x.train(True)
+        model.lstm_cell_y.train(True)
         model.classifier.train(True)
         writer.add_scalar('lr', optimizer_fn.param_groups[0]['lr'], epoch+1)
         
@@ -199,7 +200,7 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
             labelVariable = Variable(targets.cuda())
             trainSamples += inputs.size(0)
             
-            output_label, _ = model(inputVariable)
+            output_label, _ = model(inputVariable,inputSNVariable)
             
             loss = loss_fn(output_label, labelVariable)
             loss.backward()
@@ -237,7 +238,7 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
                     labelVariable = Variable(targets.cuda(async=True))
                     #labelVariable = Variable(targets.cuda())
                     
-                    output_label, _ = model(inputVariable)
+                    output_label, _ = model(inputVariable,inputSNVariable)
                     val_loss = loss_fn(output_label, labelVariable)
                     val_loss_epoch += val_loss.item()
                     

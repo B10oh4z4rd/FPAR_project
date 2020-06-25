@@ -8,12 +8,12 @@ from MyConvLSTMCell import *
 
 class attentionDoubleResnet(nn.Module):
     def __init__(self, num_classes=61, mem_size=512):
-        super(noAttentionModel, self).__init__()
+        super(attentionDoubleResnet, self).__init__()
         self.num_classes = num_classes
         self.resNet1 = resnetMod.resnet34(True, True)
         self.resNet2 = resnetMod.resnet34(True, True)
         self.mem_size = mem_size
-        self.weight_softmax = self.resNet.fc.weight
+        self.weight_softmax = self.resNet1.fc.weight
         self.lstm_cell_x = MyConvLSTMCell(512, mem_size)
         self.lstm_cell_y = MyConvLSTMCell(512, mem_size)
         self.avgpool = nn.AvgPool2d(7)
@@ -50,8 +50,8 @@ class attentionDoubleResnet(nn.Module):
             attentionFeat2 = feature_convNBN2 * attentionMAP2.expand_as(feature_conv)
             state_y = self.lstm_cell_y(attentionFeat, state_y)
             
-        feats1 = self.avgpool(state[1]).view(state_x[1].size(0), -1)
-        feats2 = self.avgpool(state[1]).view(state_y[1].size(0), -1)
+        feats1 = self.avgpool(state_x[1]).view(state_x[1].size(0), -1)
+        feats2 = self.avgpool(state_y[1]).view(state_y[1].size(0), -1)
         feats_xy = torch.cat((feats1,feats2), 1)
         feats = self.classifier(feats_xy)
         return feats, feats_xy
