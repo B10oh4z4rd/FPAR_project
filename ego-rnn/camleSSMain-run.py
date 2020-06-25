@@ -3,7 +3,7 @@ from spatial_transforms import (Compose, ToTensor, CenterCrop, Scale, Normalize,
                                 RandomHorizontalFlip)
 from tensorboardX import SummaryWriter
 import torch.nn as nn
-from selfSupervisedTwoStreamModel import *
+from camleSSTwoStreamModel import *
 from torch.autograd import Variable
 from torch.utils.data.sampler import WeightedRandomSampler
 from selfSupervisedMakeDatasetTwoStream import *
@@ -39,6 +39,8 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
         print('Dir {} exists!'.format(model_folder))
         sys.exit()
     os.makedirs(model_folder)
+
+    torch.autograd.set_detect_anomaly(True)
 
     # Log files
     writer = SummaryWriter(model_folder)
@@ -142,10 +144,9 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
     train_iter = 0
 
     if checkpoint != None:
-        checkpoint = torch.load(checkpoint)
-        model.load_state_dict(checkpoint['model_state_dict'])
-        optim_scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-        
+      checkpoint = torch.load(checkpoint)
+      model.load_state_dict(checkpoint['model_state_dict'])
+      optim_scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
 
     for epoch in range(numEpochs):
         optim_scheduler.step()
@@ -271,6 +272,7 @@ def __main__():
     parser.add_argument('--memSize', type=int, default=512, help='ConvLSTM hidden state size')
     parser.add_argument('--checkpoint', type=str,default=None,help='Reload last saved epoch')
 
+
     args = parser.parse_args()
 
     dataset = args.dataset
@@ -289,7 +291,7 @@ def __main__():
     decay_factor = args.decayRate
     memSize = args.memSize
     checkpoint = args.checkpoint
-
+    
     main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainDatasetDir, valDatasetDir, outDir,
              trainBatchSize, valBatchSize, lr1, numEpochs, decay_step, decay_factor,checkpoint)
 
