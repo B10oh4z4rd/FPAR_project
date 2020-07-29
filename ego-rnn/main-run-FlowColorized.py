@@ -19,13 +19,6 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
     #dataset = 'gtea61'
     num_classes = 61
     
-    model_folder = os.path.join('./', out_dir, 'FlowColorization', str(seqLen), 'stage'+str(stage)) # Dir for saving models and log files
-    # Create the dir
-    if os.path.exists(model_folder):
-        print('Directory {} exists!'.format(model_folder))
-        sys.exit()
-    os.makedirs(model_folder)
-    
     if color == 'opticalHSV':
         from makeDatasetOpticalFlowColorized import makeDataset# as makeDatasetOFC #optical flow
     elif color == 'warpedHSV':
@@ -37,6 +30,15 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
     else:
         print(color,' is not valid')
         exit(-1)
+    
+    model_folder = os.path.join('./', out_dir, color, str(seqLen), 'stage'+str(stage)) # Dir for saving models and log files
+    # Create the dir
+    if os.path.exists(model_folder):
+        print('Directory {} exists!'.format(model_folder))
+        sys.exit()
+    os.makedirs(model_folder)
+    
+    
     # Log files
     writer = SummaryWriter(model_folder)
     train_log_loss = open((model_folder + '/train_log_loss.txt'), 'w')
@@ -221,7 +223,7 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
             val_log_acc.write('Val Accuracy after {} epochs = {}%\n'.format(epoch + 1, val_accuracy))
             
             if val_accuracy > min_accuracy:
-                save_path_model = (model_folder + '/model_flow_colorized_state_dict.pth')
+                save_path_model = (model_folder + '/model_' + color + '_state_dict.pth')
                 torch.save(model.state_dict(), save_path_model)
                 min_accuracy = val_accuracy
 
