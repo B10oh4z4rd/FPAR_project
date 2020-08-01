@@ -7,7 +7,7 @@ from tensorboardX import SummaryWriter
 #from makeDatasetFlowHSVMapped import makeDataset# as makeDatasetWFC #warped flow
 #from makeDatasetFlowSN import makeDataset# as makeDatasetFlowSN #warped flow surface normal
 #from makeDatasetFlowColorized import makeDataset# as makeDatasetFlowCJ #warped flow colorjet
-
+import datetime
 import argparse
 import sys
 import numpy as np
@@ -17,9 +17,10 @@ import cv2
 def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, trainBatchSize,
              valBatchSize, numEpochs, lr1, decay_factor, decay_step, memSize,color):
     #dataset = 'gtea61'
+    begin_time = datetime.datetime.now()
     num_classes = 61
     
-    model_folder = os.path.join('./', out_dir, 'attConvLSTM', str(seqLen), 'stage'+str(stage)) # Dir for saving models and log files
+    model_folder = os.path.join('./', out_dir, 'flow_colorized',color, str(seqLen), 'stage'+str(stage)) # Dir for saving models and log files
     # Create the dir
     if os.path.exists(model_folder):
         print('Directory {} exists!'.format(model_folder))
@@ -138,6 +139,9 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
 
     train_iter = 0
     min_accuracy = 0
+
+    dataload_time = datetime.datetime.now()
+
     for epoch in range(numEpochs):
         epoch_loss = 0
         numCorrTrain = 0
@@ -224,6 +228,7 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
                 save_path_model = (model_folder + '/model_rgb_state_dict.pth')
                 torch.save(model.state_dict(), save_path_model)
                 min_accuracy = val_accuracy
+                print("saved new best model")
 
     train_log_loss.close()
     train_log_acc.close()
@@ -231,6 +236,12 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
     val_log_loss.close()
     writer.export_scalars_to_json(model_folder + "/all_scalars.json")
     writer.close()
+    end_time = datetime.datetime.now()
+    print('total time elapsed: ',end_time-begin_time)
+    print('dataload time: ',dataload_time-begin_time)
+    print('training time: ',end_time-dataload_time)
+    timers = open((model_folder + '/timings.txt'), 'w')
+    timers.write(f"total time elapsed: {end_time-begin_time} \ndataload time: {dataload_time-begin_time} \ntraining time: {end_time-dataload_time}")
 
 
 def __main__():
@@ -238,7 +249,7 @@ def __main__():
     parser.add_argument('--stage', type=int, default=1, help='Training stage')
     parser.add_argument('--trainDatasetDir', type=str, default='./GTEA61',
                         help='Train set directory')
-    parser.add_argument('--valDatasetDir', type=str, default=None,
+    parser.add_argument('--valDatasetDir', type=str, default='./GTEA61',
                         help='Val set directory')
     parser.add_argument('--outDir', type=str, default='experiments', help='Directory to save results')
     parser.add_argument('--stage1Dict', type=str, default='./experiments/gtea61/rgb/stage1/best_model_state_dict.pth',

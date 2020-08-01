@@ -40,15 +40,7 @@ class attentionDoubleResnet(nn.Module):
             state_x = self.lstm_cell_x(attentionFeat, state_x)
             
             logit2, feature_conv2, feature_convNBN2 = self.resNet2(inputVariable2[t])
-            bz2, nc2, h2, w2 = feature_conv2.size()
-            feature_conv2 = feature_conv2.view(bz, nc, h*w)
-            probs2, idxs2 = logit2.sort(1, True)
-            class_idx2 = idxs2[:, 0]
-            cam2 = torch.bmm(self.weight_softmax[class_idx2].unsqueeze(1), feature_conv2)
-            attentionMAP2 = F.softmax(cam.squeeze(1), dim=1)
-            attentionMAP2 = attentionMAP2.view(attentionMAP.size(0), 1, 7, 7)
-            attentionFeat2 = feature_convNBN2 * attentionMAP2.expand_as(feature_conv)
-            state_y = self.lstm_cell_y(attentionFeat, state_y)
+            state_y = self.lstm_cell_y(feature_convNBN2, state_y)
             
         feats1 = self.avgpool(state_x[1]).view(state_x[1].size(0), -1)
         feats2 = self.avgpool(state_y[1]).view(state_y[1].size(0), -1)

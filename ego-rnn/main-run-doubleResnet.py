@@ -53,7 +53,7 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
         model.train(False)
         for params in model.parameters():
             params.requires_grad = False
-    else: # stage == 2
+    elif stage == 2:
         model = attentionDoubleResnet(num_classes=num_classes, mem_size=memSize)
         model.load_state_dict(torch.load(stage1_dict))
         model.train(False)
@@ -62,67 +62,67 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.frameModel.lstm_cell_x.parameters():
+        for params in model.lstm_cell_x.parameters():
             train_params += [params]
             params.requires_grad = True
 
-        for params in model.frameModel.lstm_cell_y.parameters():
+        for params in model.lstm_cell_y.parameters():
             train_params += [params]
             params.requires_grad = True
             
-        for params in model.frameModel.resNet1.layer4[0].conv1.parameters():
+        for params in model.resNet1.layer4[0].conv1.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.frameModel.resNet1.layer4[0].conv2.parameters():
+        for params in model.resNet1.layer4[0].conv2.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.frameModel.resNet1.layer4[1].conv1.parameters():
+        for params in model.resNet1.layer4[1].conv1.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.frameModel.resNet1.layer4[1].conv2.parameters():
+        for params in model.resNet1.layer4[1].conv2.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.frameModel.resNet1.layer4[2].conv1.parameters():
+        for params in model.resNet1.layer4[2].conv1.parameters():
             params.requires_grad = True
             train_params += [params]
         #
-        for params in model.frameModel.resNet1.layer4[2].conv2.parameters():
+        for params in model.resNet1.layer4[2].conv2.parameters():
             params.requires_grad = True
             train_params += [params]
         #
-        for params in model.frameModel.resNet1.fc.parameters():
+        for params in model.resNet1.fc.parameters():
             params.requires_grad = True
             train_params += [params]
             
-        for params in model.frameModel.resNet2.layer4[0].conv1.parameters():
+        for params in model.resNet2.layer4[0].conv1.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.frameModel.resNet2.layer4[0].conv2.parameters():
+        for params in model.resNet2.layer4[0].conv2.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.frameModel.resNet2.layer4[1].conv1.parameters():
+        for params in model.resNet2.layer4[1].conv1.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.frameModel.resNet2.layer4[1].conv2.parameters():
+        for params in model.resNet2.layer4[1].conv2.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.frameModel.resNet2.layer4[2].conv1.parameters():
+        for params in model.resNet2.layer4[2].conv1.parameters():
             params.requires_grad = True
             train_params += [params]
         #
-        for params in model.frameModel.resNet2.layer4[2].conv2.parameters():
+        for params in model.resNet2.layer4[2].conv2.parameters():
             params.requires_grad = True
             train_params += [params]
         #
-        for params in model.frameModel.resNet2.fc.parameters():
+        for params in model.resNet2.fc.parameters():
             params.requires_grad = True
             train_params += [params]
 
