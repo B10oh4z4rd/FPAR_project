@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import argparse
 import sys
+import os
+
 
 def main_run(model_state_dict, dataset_dir, seqLen, memSize, out_dir,color):
     model_folder = os.path.join('./', out_dir, '', str(seqLen))
