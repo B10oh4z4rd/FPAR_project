@@ -8,7 +8,7 @@ import argparse
 import sys
 import numpy as np
 
-def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, trainBatchSize,
+def main_run(stage, train_data_dir, val_data_dir, stage1Dict, stage1Dict_rgb, stage1Dict_fc, out_dir, seqLen, trainBatchSize,
              valBatchSize, numEpochs, lr1, decay_factor, decay_step, memSize):
     #dataset = 'gtea61'
     num_classes = 61
@@ -49,7 +49,7 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
     
     train_params = []
     if stage == 1:
-        model = attentionDoubleResnet(num_classes=num_classes, mem_size=memSize)
+        model = attentionDoubleResnet(num_classes=num_classes, mem_size=memSize, rgbModel = args.stage1Dict_rgb,  fcModel = args.stage1Dict_fc)
         model.train(False)
         for params in model.parameters():
             params.requires_grad = False
@@ -275,7 +275,11 @@ def __main__():
     parser.add_argument('--valDatasetDir', type=str, default=None,
                         help='Val set directory')
     parser.add_argument('--outDir', type=str, default='experiments', help='Directory to save results')
-    parser.add_argument('--stage1Dict', type=str, default='./experiments/gtea61/rgbSN/stage1/best_model_state_dict.pth',
+    parser.add_argument('--stage1Dict_rgb', type=str, default=None,
+                        help='Stage 1 model path')
+    parser.add_argument('--stage1Dict', type=str, default=None,
+                        help='Stage 1 model path')
+    parser.add_argument('--stage1Dict_fc', type=str, default=None,
                         help='Stage 1 model path')
     parser.add_argument('--seqLen', type=int, default=25, help='Length of sequence')
     parser.add_argument('--trainBatchSize', type=int, default=32, help='Training batch size')
@@ -292,6 +296,8 @@ def __main__():
     trainDatasetDir = args.trainDatasetDir
     valDatasetDir = args.valDatasetDir
     outDir = args.outDir
+    stage1Dict_rgb = args.stage1Dict_rgb
+    stage1Dict_fc = args.stage1Dict_fc
     stage1Dict = args.stage1Dict
     seqLen = args.seqLen
     trainBatchSize = args.trainBatchSize
@@ -302,7 +308,7 @@ def __main__():
     decayRate = args.decayRate
     memSize = args.memSize
 
-    main_run(stage, trainDatasetDir, valDatasetDir, stage1Dict, outDir, seqLen, trainBatchSize,
+    main_run(stage, trainDatasetDir, valDatasetDir, stage1Dict, stage1Dict_rgb, stage1Dict_fc, outDir, seqLen, trainBatchSize,
              valBatchSize, numEpochs, lr1, decayRate, stepSize, memSize)
 
 __main__()

@@ -1,5 +1,6 @@
 from __future__ import print_function, division
 from objectAttentionModelConvLSTM import *
+from noAttentionConvLSTM import *
 from spatial_transforms import (Compose, ToTensor, CenterCrop, Scale, Normalize, MultiScaleCornerCrop,
                                 RandomHorizontalFlip)
 from tensorboardX import SummaryWriter
@@ -15,7 +16,7 @@ import os
 import cv2
 
 def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, trainBatchSize,
-             valBatchSize, numEpochs, lr1, decay_factor, decay_step, memSize,color):
+             valBatchSize, numEpochs, lr1, decay_factor, decay_step, memSize,color, attention):
     #dataset = 'gtea61'
     num_classes = 61
     
@@ -68,12 +69,18 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
     
     train_params = []
     if stage == 1:
-        model = attentionModel(num_classes=num_classes, mem_size=memSize)
+        if attention:
+            model = attentionModel(num_classes=num_classes, mem_size=memSize)
+        else:
+            model = noAttentionModel(num_classes=num_classes, mem_size=memSize)
         model.train(False)
         for params in model.parameters():
             params.requires_grad = False
     else: # stage == 2
-        model = attentionModel(num_classes=num_classes, mem_size=memSize)
+        if attention:
+            model = attentionModel(num_classes=num_classes, mem_size=memSize)
+        else:
+            model = noAttentionModel(num_classes=num_classes, mem_size=memSize)
         model.load_state_dict(torch.load(stage1_dict))
         model.train(False)
         
@@ -254,6 +261,7 @@ def __main__():
     parser.add_argument('--decayRate', type=float, default=0.1, help='Learning rate decay rate')
     parser.add_argument('--memSize', type=int, default=512, help='ConvLSTM hidden state size')
     parser.add_argument('--color', type=str, default='surfaceNormal', help='which colorized flow use (colorJet,surfaceNormal,warpedHSV,opticalHSV)')
+    parser.add_argument('--attention', type=bool, default=False, help='apply attention model')
 
     args = parser.parse_args()
 
@@ -271,8 +279,9 @@ def __main__():
     decayRate = args.decayRate
     memSize = args.memSize
     color = args.color
+    attention = args.attention
 
     main_run(stage, trainDatasetDir, valDatasetDir, stage1Dict, outDir, seqLen, trainBatchSize,
-             valBatchSize, numEpochs, lr1, decayRate, stepSize, memSize,color)
+             valBatchSize, numEpochs, lr1, decayRate, stepSize, memSize,color, attention)
 
 __main__()
