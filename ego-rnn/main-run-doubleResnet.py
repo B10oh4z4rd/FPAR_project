@@ -49,7 +49,7 @@ def main_run(stage, train_data_dir, val_data_dir, stage1Dict, stage1Dict_rgb, st
     
     train_params = []
     if stage == 1:
-        model = attentionDoubleResnet(num_classes=num_classes, mem_size=memSize, rgbModel = args.stage1Dict_rgb,  fcModel = args.stage1Dict_fc)
+        model = attentionDoubleResnet(num_classes=num_classes, mem_size=memSize, rgbModel = stage1Dict_rgb,  fcModel = stage1Dict_fc)
         model.train(False)
         for params in model.parameters():
             params.requires_grad = False
