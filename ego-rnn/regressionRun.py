@@ -3,7 +3,7 @@ from spatial_transforms import (Compose, ToTensor, CenterCrop, Scale, Normalize,
                                 RandomHorizontalFlip)
 from tensorboardX import SummaryWriter
 import torch.nn as nn
-from selfSupervisedTwoStreamModel import *
+from regressionTwoStreamModel import *
 from torch.autograd import Variable
 from torch.utils.data.sampler import WeightedRandomSampler
 from selfSupervisedMakeDatasetTwoStream import *
@@ -133,6 +133,7 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
     min_accuracy = 0
 
     loss_fn = nn.CrossEntropyLoss()
+    loss_fn_regression = nn.MSELoss()
     optimizer_fn = torch.optim.SGD([
         {'params': train_params},
         {'params': base_params, 'lr': 1e-4},
@@ -172,13 +173,13 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
             #print(f'Size for label variable: {labelVariable.size()}')
             loss = loss_fn(F.log_softmax(output_label, dim=1), labelVariable)
             #We need to adjust the size for the input map
-            mmapPrediction = mmapPrediction.view(-1,2)
+            mmapPrediction = mmapPrediction.view(-1)
             #print(f'Size for the map :{inputMmap.size()}')
             #print(f'Size for the prediction :{mmapPrediction.size()}')
             #inputMmap=inputMmap.permute(1,0,2,3,4)
-            inputMmap = torch.reshape(inputMmap, (-1,)).long()
+            inputMmap = torch.reshape(inputMmap, (-1,)).float()
             #print(f'Size for the map flattened :{inputMmap.size()}')
-            loss2 = loss_fn(mmapPrediction,inputMmap)
+            loss2 = loss_fn_regression(mmapPrediction,inputMmap)
             total_loss = loss +loss2
             total_loss.backward()
             optimizer_fn.step()
@@ -212,9 +213,9 @@ def main_run(dataset, flowModel, rgbModel, stackSize, seqLen, memSize, trainData
                     inputVariableFrame = Variable(inputFrame.permute(1, 0, 2, 3, 4).cuda())
                     labelVariable = Variable(targets.cuda())
                     output_label, mmapPrediction = model(inputVariableFlow, inputVariableFrame)
-                    mmapPrediction = mmapPrediction.view(-1,2)
-                    inputMmap = torch.reshape(inputMmap, (-1,)).long()
-                    loss2 = loss_fn(mmapPrediction,inputMmap)
+                    mmapPrediction = mmapPrediction.view(-1)
+                    inputMmap = torch.reshape(inputMmap, (-1,)).float()
+                    loss2 = loss_fn_regression(mmapPrediction,inputMmap)
                     loss = loss_fn(F.log_softmax(output_label, dim=1), labelVariable)
                     val_loss_epoch += loss.item()
                     val_mmap_loss += loss2.item()
