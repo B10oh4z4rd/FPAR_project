@@ -7,7 +7,7 @@ import torch.nn as nn
 
 class twoStreamFlowCol(nn.Module):
     def __init__(self, flowModel='', frameModel='', seqLen = 7, memSize=512, num_classes=61):
-        super(twoStreamAttentionModel, self).__init__()
+        super(twoStreamFlowCol, self).__init__()
         self.flowModel = noAttentionModel(num_classes=num_classes, mem_size=memSize)
         if flowModel != '':
             self.flowModel.load_state_dict(torch.load(flowModel))
