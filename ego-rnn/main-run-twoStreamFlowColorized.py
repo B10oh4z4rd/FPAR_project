@@ -49,7 +49,7 @@ def main_run(stage, train_data_dir, val_data_dir, stage1Dict, stage1Dict_rgb, st
     
     train_params = []
     
-    model = twoStreamFlowCol(num_classes=num_classes, mem_size=memSize, frameModel = stage1Dict_rgb,  flowModel = stage1Dict_fc)
+    model = twoStreamFlowCol(num_classes=num_classes, memSize=memSize, frameModel = stage1Dict_rgb,  flowModel = stage1Dict_fc)
     model.train(False)
     for params in model.parameters():
         params.requires_grad = False
