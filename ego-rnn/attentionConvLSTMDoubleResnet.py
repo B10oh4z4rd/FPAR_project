@@ -4,6 +4,8 @@ import torch.nn as nn
 from torch.nn import functional as F
 from torch.autograd import Variable
 from MyConvLSTMCell import *
+from objectAttentionModelConvLSTM import *
+from noAttentionConvLSTM import *
 
 
 class attentionDoubleResnet(nn.Module):
