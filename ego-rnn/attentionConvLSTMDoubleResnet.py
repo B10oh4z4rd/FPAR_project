@@ -4,18 +4,15 @@ import torch.nn as nn
 from torch.nn import functional as F
 from torch.autograd import Variable
 from MyConvLSTMCell import *
-
+from objectAttentionModelConvLSTM import *
+from noAttentionConvLSTM import *
 
 class attentionDoubleResnet(nn.Module):
     def __init__(self, num_classes=61, mem_size=512, rgbm = None, fcm = None):
         super(attentionDoubleResnet, self).__init__()
         self.num_classes = num_classes
         self.resNet1 = resnetMod.resnet34(True, True)
-        if rgbm is not None:
-            self.resNet1.load_state_dict(torch.load(rgbm))
         self.resNet2 = resnetMod.resnet34(True, True)
-        if fcm is not None:
-            self.resNet2.load_state_dict(torch.load(fcm))
         self.mem_size = mem_size
         self.weight_softmax = self.resNet1.fc.weight
         self.lstm_cell_x = MyConvLSTMCell(512, mem_size)

@@ -1,5 +1,5 @@
 from __future__ import print_function, division
-from attentionConvLSTMDoubleResnet import *
+from twoStreamModelDoubleResnet import *
 from spatial_transforms import (Compose, ToTensor, CenterCrop, Scale, Normalize, MultiScaleCornerCrop,
                                 RandomHorizontalFlip)
 from tensorboardX import SummaryWriter
@@ -48,125 +48,98 @@ def main_run(stage, train_data_dir, val_data_dir, stage1Dict, stage1Dict_rgb, st
                                 shuffle=False, num_workers=2, pin_memory=True)
     
     train_params = []
-    if stage == 1:
-        model = attentionDoubleResnet(num_classes=num_classes, mem_size=memSize, rgbModel = stage1Dict_rgb,  fcModel = stage1Dict_fc)
-        model.train(False)
-        for params in model.parameters():
-            params.requires_grad = False
-    elif stage == 2:
-        model = attentionDoubleResnet(num_classes=num_classes, mem_size=memSize)
-        model.load_state_dict(torch.load(stage1_dict))
-        model.train(False)
-        
-        for params in model.classifier.parameters():
-            params.requires_grad = True
-            train_params += [params]
-
-        for params in model.lstm_cell_x.parameters():
-            train_params += [params]
-            params.requires_grad = True
-
-        for params in model.lstm_cell_y.parameters():
-            train_params += [params]
-            params.requires_grad = True
-            
-        for params in model.resNet1.layer4[0].conv1.parameters():
-            params.requires_grad = True
-            train_params += [params]
-
-        for params in model.resNet1.layer4[0].conv2.parameters():
-            params.requires_grad = True
-            train_params += [params]
-
-        for params in model.resNet1.layer4[1].conv1.parameters():
-            params.requires_grad = True
-            train_params += [params]
-
-        for params in model.resNet1.layer4[1].conv2.parameters():
-            params.requires_grad = True
-            train_params += [params]
-
-        for params in model.resNet1.layer4[2].conv1.parameters():
-            params.requires_grad = True
-            train_params += [params]
-        #
-        for params in model.resNet1.layer4[2].conv2.parameters():
-            params.requires_grad = True
-            train_params += [params]
-        #
-        for params in model.resNet1.fc.parameters():
-            params.requires_grad = True
-            train_params += [params]
-            
-        for params in model.resNet2.layer4[0].conv1.parameters():
-            params.requires_grad = True
-            train_params += [params]
-
-        for params in model.resNet2.layer4[0].conv2.parameters():
-            params.requires_grad = True
-            train_params += [params]
-
-        for params in model.resNet2.layer4[1].conv1.parameters():
-            params.requires_grad = True
-            train_params += [params]
-
-        for params in model.resNet2.layer4[1].conv2.parameters():
-            params.requires_grad = True
-            train_params += [params]
-
-        for params in model.resNet2.layer4[2].conv1.parameters():
-            params.requires_grad = True
-            train_params += [params]
-        #
-        for params in model.resNet2.layer4[2].conv2.parameters():
-            params.requires_grad = True
-            train_params += [params]
-        #
-        for params in model.resNet2.fc.parameters():
-            params.requires_grad = True
-            train_params += [params]
-
-
-        model.resNet1.layer4[0].conv1.train(True)
-        model.resNet1.layer4[0].conv2.train(True)
-        model.resNet1.layer4[1].conv1.train(True)
-        model.resNet1.layer4[1].conv2.train(True)
-        model.resNet1.layer4[2].conv1.train(True)
-        model.resNet1.layer4[2].conv2.train(True)
-        model.resNet1.fc.train(True)
-        model.resNet2.layer4[0].conv1.train(True)
-        model.resNet2.layer4[0].conv2.train(True)
-        model.resNet2.layer4[1].conv1.train(True)
-        model.resNet2.layer4[1].conv2.train(True)
-        model.resNet2.layer4[2].conv1.train(True)
-        model.resNet2.layer4[2].conv2.train(True)
-        model.resNet2.fc.train(True)
     
-    for params in model.lstm_cell_x.parameters():
-        params.requires_grad = True
-        train_params += [params]
-        
-    for params in model.lstm_cell_y.parameters():
-        params.requires_grad = True
-        train_params += [params]
+    model = twoStreamFlowCol(num_classes=num_classes, mem_size=memSize, frameModel = stage1Dict_rgb,  flowModel = stage1Dict_fc)
+    model.train(False)
+    for params in model.parameters():
+        params.requires_grad = False
+ 
+    model.train(False)
+    train_params = []
 
     for params in model.classifier.parameters():
         params.requires_grad = True
         train_params += [params]
 
-    model.lstm_cell_x.train(True)
-    model.lstm_cell_y.train(True)
+    for params in model.frameModel.lstm_cell.parameters():
+        train_params += [params]
+        params.requires_grad = True
 
-    model.classifier.train(True)
+    for params in model.frameModel.resNet.layer4[0].conv1.parameters():
+        params.requires_grad = True
+        train_params += [params]
+
+    for params in model.frameModel.resNet.layer4[0].conv2.parameters():
+        params.requires_grad = True
+        train_params += [params]
+
+    for params in model.frameModel.resNet.layer4[1].conv1.parameters():
+        params.requires_grad = True
+        train_params += [params]
+
+    for params in model.frameModel.resNet.layer4[1].conv2.parameters():
+        params.requires_grad = True
+        train_params += [params]
+
+    for params in model.frameModel.resNet.layer4[2].conv1.parameters():
+        params.requires_grad = True
+        train_params += [params]
+    #
+    for params in model.frameModel.resNet.layer4[2].conv2.parameters():
+        params.requires_grad = True
+        train_params += [params]
+    #
+    for params in model.frameModel.resNet.fc.parameters():
+        params.requires_grad = True
+        train_params += [params]
+
+
+    for params in model.classifier.parameters():
+        params.requires_grad = True
+        train_params += [params]
+
+    for params in model.flowModel.lstm_cell.parameters():
+        train_params += [params]
+        params.requires_grad = True
+
+    for params in model.flowModel.resNet.layer4[0].conv1.parameters():
+        params.requires_grad = True
+        train_params += [params]
+
+    for params in model.flowModel.resNet.layer4[0].conv2.parameters():
+        params.requires_grad = True
+        train_params += [params]
+
+    for params in model.flowModel.resNet.layer4[1].conv1.parameters():
+        params.requires_grad = True
+        train_params += [params]
+
+    for params in model.flowModel.resNet.layer4[1].conv2.parameters():
+        params.requires_grad = True
+        train_params += [params]
+
+    for params in model.flowModel.resNet.layer4[2].conv1.parameters():
+        params.requires_grad = True
+        train_params += [params]
+    #
+    for params in model.flowModel.resNet.layer4[2].conv2.parameters():
+        params.requires_grad = True
+        train_params += [params]
+    #
+    for params in model.flowModel.resNet.fc.parameters():
+        params.requires_grad = True
+        train_params += [params]
+
+
     model.cuda()
 
+    trainSamples = vid_seq_train.__len__()
+    min_accuracy = 0
+
     loss_fn = nn.CrossEntropyLoss()
+    optimizer_fn = torch.optim.SGD(train_params, lr=lr1, momentum=0.9, weight_decay=5e-4)
 
-    optimizer_fn = torch.optim.Adam(train_params, lr=lr1, weight_decay=4e-5, eps=1e-4)
-
-    optim_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer_fn, milestones=decay_step,
-                                                           gamma=decay_factor)
-
+    optim_scheduler = torch.optim.lr_scheduler.StepLR(optimizer_fn, step_size=decay_step, gamma=decay_factor)
     train_iter = 0
     min_accuracy = 0
     for epoch in range(numEpochs):
@@ -175,19 +148,8 @@ def main_run(stage, train_data_dir, val_data_dir, stage1Dict, stage1Dict_rgb, st
         trainSamples = 0
         iterPerEpoch = 0
         
-        model.lstm_cell_x.train(True)
-        model.lstm_cell_y.train(True)
         model.classifier.train(True)
         writer.add_scalar('lr', optimizer_fn.param_groups[0]['lr'], epoch+1)
-        
-        if stage == 2:
-            model.resNet.layer4[0].conv1.train(True)
-            model.resNet.layer4[0].conv2.train(True)
-            model.resNet.layer4[1].conv1.train(True)
-            model.resNet.layer4[1].conv2.train(True)
-            model.resNet.layer4[2].conv1.train(True)
-            model.resNet.layer4[2].conv2.train(True)
-            model.resNet.fc.train(True)
         
         #for i, (inputs, targets) in enumerate(train_loader):
         for inputs, inputsSN, targets in train_loader:

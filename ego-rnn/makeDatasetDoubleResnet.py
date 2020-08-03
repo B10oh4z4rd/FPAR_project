@@ -6,7 +6,7 @@ import numpy as np
 import glob
 import random
 
-def gen_split(root_dir, stackSize, user, fmt = ".jpg"):
+def gen_split(root_dir, stackSize, user, fmt = ".png"):
     fmt = "*" + fmt
     class_id = 0
     
@@ -41,14 +41,14 @@ def gen_split(root_dir, stackSize, user, fmt = ".jpg"):
 class makeDataset(Dataset):
     def __init__(self, root_dir, spatial_transform=None, seqLen=20,
                  train=True, mulSeg=False, numSeg=1,
-                 fmt='.jpg', users=[]):
+                 fmt='.png', users=[]):
         self.images = []
         self.surNorms = []
         self.labels = []
         self.numFrames = []
         
         for user in users:
-            imgs, surfs, lbls, nfrms = gen_split(root_dir, 5, user, fmt)
+            imgs, surfs, lbls, nfrms = gen_split(root_dir, seqLen, user, fmt)
             self.images.extend(imgs)
             self.surNorms.extend(surfs)
             self.labels.extend(lbls)

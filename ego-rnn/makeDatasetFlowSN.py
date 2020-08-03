@@ -63,3 +63,5 @@ class makeDataset(Dataset):
             inpSeq.append(self.spatial_transform(img.convert('RGB')))
         inpSeq = torch.stack(inpSeq, 0)
         return inpSeq, label
+    
+    

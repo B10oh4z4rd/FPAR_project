@@ -50,7 +50,7 @@ class makeDataset(Dataset):
         self.train = train
         self.numSeg = numSeg
         self.sequence = sequence
-        self.stackSize = stackSize
+        self.stackSize = sequence
         self.fmt = fmt
         self.phase = phase
         self.info_ = {"definition" : "creates a flow dataset",

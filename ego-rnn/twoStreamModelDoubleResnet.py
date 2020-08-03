@@ -1,24 +1,25 @@
 import torch
 from flow_resnet import *
-from attentionConvLSTMDoubleResnet import *
+from objectAttentionModelConvLSTM import *
+from noAttentionConvLSTM import *
 import torch.nn as nn
 
 
-class twoStreamAttentionModel(nn.Module):
-    def __init__(self, flowModel='', frameSNModel='', stackSize=5, memSize=512, num_classes=61):
+class twoStreamFlowCol(nn.Module):
+    def __init__(self, flowModel='', frameModel='', seqLen = 7, memSize=512, num_classes=61):
         super(twoStreamAttentionModel, self).__init__()
-        self.flowModel = flow_resnet34(False, channels=2*stackSize, num_classes=num_classes)
+        self.flowModel = noAttentionModel(num_classes=num_classes, mem_size=memSize)
         if flowModel != '':
             self.flowModel.load_state_dict(torch.load(flowModel))
-        self.frameSNModel = attentionDoubleResnet(num_classes, memSize)
-        if frameSNModel != '':
-            self.frameSNModel.load_state_dict(torch.load(frameSNModel))
-        self.fc2 = nn.Linear(512 * 3, num_classes, bias=True)
+        self.frameModel = attentionModel(num_classes, memSize)
+        if frameModel != '':
+            self.frameModel.load_state_dict(torch.load(frameModel))
+        self.fc2 = nn.Linear(memSize * 2, num_classes, bias=True)
         self.dropout = nn.Dropout(0.5)
         self.classifier = nn.Sequential(self.dropout, self.fc2)
 
-    def forward(self, inputVariableFlow, inputVariableFrame, inputVariableSN):
+    def forward(self, inputVariableFrame, inputVariableFlow):
         _, flowFeats = self.flowModel(inputVariableFlow)
-        _, rgbSNFeats = self.frameModel(inputVariableFrame,inputVariableSN)
-        twoStreamFeatsDoubleR = torch.cat((flowFeats, rgbSNFeats), 1)
+        _, rgbFeats = self.frameModel(inputVariableFrame)
+        twoStreamFeatsDoubleR = torch.cat((flowFeats, rgbFeats), 1)
         return self.classifier(twoStreamFeatsDoubleR)
