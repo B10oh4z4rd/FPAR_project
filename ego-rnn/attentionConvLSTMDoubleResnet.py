@@ -12,12 +12,15 @@ class attentionDoubleResnet(nn.Module):
     def __init__(self, num_classes=61, mem_size=512, rgbm = None, fcm = None):
         super(attentionDoubleResnet, self).__init__()
         self.num_classes = num_classes
+        self.resNet1 = resnetMod.resnet34(True, True)
         if rgbm is not None:
-            model = attentionModel.load_state_dict(torch.load(rgbm))
+            model = attentionModel(num_classes, memSize)
+            model.load_state_dict(torch.load(rgbm))
             self.resNet1.load_state_dict(model.resNet.state_dict)
         self.resNet2 = resnetMod.resnet34(True, True)
         if fcm is not None:
-            model = attentionModel.load_state_dict(torch.load(rgbm))
+            model = noAttentionModel(num_classes, memSize)
+            model.load_state_dict(torch.load(rgbm))
             self.resNet2.load_state_dict(model.resNet.state_dict)
         self.mem_size = mem_size
         self.weight_softmax = self.resNet1.fc.weight
