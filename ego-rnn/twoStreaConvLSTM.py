@@ -15,12 +15,12 @@ class commonConvLSTM(nn.Module):
         if rgbm is not None:
             model = attentionModel(num_classes, mem_size)
             model.load_state_dict(torch.load(rgbm))
-            self.resNet1.load_state_dict(model.resNet.state_dict)
+            self.resNet1.load_state_dict(model.resNet.state_dict())
         self.resNet2 = resnetMod.resnet34(True, True)
         if fcm is not None:
             model = noAttentionModel(num_classes, mem_size)
             model.load_state_dict(torch.load(rgbm))
-            self.resNet2.load_state_dict(model.resNet.state_dict)
+            self.resNet2.load_state_dict(model.resNet.state_dict())
         self.mem_size = mem_size
         self.weight_softmax = self.resNet1.fc.weight
         self.lstm_cell = MyConvLSTMCell(512*2, mem_size)
