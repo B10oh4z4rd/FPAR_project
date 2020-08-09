@@ -13,19 +13,22 @@ class attentionDoubleResnet(nn.Module):
         super(attentionDoubleResnet, self).__init__()
         self.num_classes = num_classes
         self.resNet1 = resnetMod.resnet34(True, True)
+        self.lstm_cell_x = MyConvLSTMCell(512, mem_size)
+        self.lstm_cell_y = MyConvLSTMCell(512, mem_size)
         if rgbm is not None:
             model = attentionModel(num_classes, mem_size)
             model.load_state_dict(torch.load(rgbm))
             self.resNet1.load_state_dict(model.resNet.state_dict())
+            self.lstm_cell_x.load_state_dict(model.lstm_cell)
         self.resNet2 = resnetMod.resnet34(True, True)
         if fcm is not None:
             model = noAttentionModel(num_classes, mem_size)
             model.load_state_dict(torch.load(rgbm))
             self.resNet2.load_state_dict(model.resNet.state_dict())
+            self.lstm_cell_y.load_state_dict(model.lstm_cell)
         self.mem_size = mem_size
         self.weight_softmax = self.resNet1.fc.weight
-        self.lstm_cell_x = MyConvLSTMCell(512, mem_size)
-        self.lstm_cell_y = MyConvLSTMCell(512, mem_size)
+        
         self.avgpool = nn.AvgPool2d(7)
         self.dropout = nn.Dropout(0.7)
         self.fc = nn.Linear(2 * mem_size, self.num_classes)
