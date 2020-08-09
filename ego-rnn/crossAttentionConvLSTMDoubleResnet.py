@@ -14,7 +14,6 @@ class attentionDoubleResnet(nn.Module):
         self.num_classes = num_classes
         self.resNet1 = resnetMod.resnet34(True, True)
         self.lstm_cell_x = MyConvLSTMCell(512, mem_size)
-        self.lstm_cell_y = MyConvLSTMCell(512, mem_size)
         if rgbm is not None:
             model = attentionModel(num_classes, mem_size)
             model.load_state_dict(torch.load(rgbm))
@@ -25,7 +24,6 @@ class attentionDoubleResnet(nn.Module):
             model = noAttentionModel(num_classes, mem_size)
             model.load_state_dict(torch.load(fcm))
             self.resNet2.load_state_dict(model.resNet.state_dict())
-            self.lstm_cell_y.load_state_dict(model.lstm_cell)
         self.mem_size = mem_size
         self.weight_softmax = self.resNet1.fc.weight
         
@@ -42,18 +40,16 @@ class attentionDoubleResnet(nn.Module):
         
         for t in range(inputVariable.size(0)):
             logit, feature_conv, feature_convNBN = self.resNet1(inputVariable[t])
-            bz, nc, h, w = feature_conv.size()
-            feature_conv1 = feature_conv.view(bz, nc, h*w)
-            probs, idxs = logit.sort(1, True)
+            logit2, feature_conv2, feature_convNBN2 = self.resNet2(inputVariable2[t])
+            bz, nc, h, w = feature_conv2.size()
+            feature_conv1 = feature_conv2.view(bz, nc, h*w)
+            probs, idxs = logit2.sort(1, True)
             class_idx = idxs[:, 0]
             cam = torch.bmm(self.weight_softmax[class_idx].unsqueeze(1), feature_conv1)
             attentionMAP = F.softmax(cam.squeeze(1), dim=1)
             attentionMAP = attentionMAP.view(attentionMAP.size(0), 1, 7, 7)
-            attentionFeat = feature_convNBN * attentionMAP.expand_as(feature_conv)
+            attentionFeat = feature_convNBN2 * attentionMAP.expand_as(feature_conv)
             state_x = self.lstm_cell_x(attentionFeat, state_x)
-            
-            logit2, feature_conv2, feature_convNBN2 = self.resNet2(inputVariable2[t])
-            state_y = self.lstm_cell_y(feature_convNBN2, state_y)
             
         feats1 = self.avgpool(state_x[1]).view(state_x[1].size(0), -1)
         feats2 = self.avgpool(state_y[1]).view(state_y[1].size(0), -1)
