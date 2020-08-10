@@ -258,6 +258,7 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
     print('training time: ',end_time-dataload_time)
     timers = open((model_folder + '/timings.txt'), 'w')
     timers.write(f"total time elapsed: {end_time-begin_time} \ndataload time: {dataload_time-begin_time} \ntraining time: {end_time-dataload_time}")
+    timers.close()
 
 
 def __main__():
