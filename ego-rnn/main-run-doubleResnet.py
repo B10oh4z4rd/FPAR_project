@@ -272,7 +272,7 @@ def __main__():
     parser.add_argument('--stage', type=int, default=1, help='Training stage')
     parser.add_argument('--trainDatasetDir', type=str, default='./GTEA61',
                         help='Train set directory')
-    parser.add_argument('--valDatasetDir', type=str, default=None,
+    parser.add_argument('--valDatasetDir', type=str, default='./GTEA61',
                         help='Val set directory')
     parser.add_argument('--outDir', type=str, default='experiments', help='Directory to save results')
     parser.add_argument('--stage1Dict_rgb', type=str, default=None,
