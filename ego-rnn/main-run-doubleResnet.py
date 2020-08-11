@@ -55,7 +55,7 @@ def main_run(stage, train_data_dir, val_data_dir, stage1Dict, stage1Dict_rgb, st
             params.requires_grad = False
     elif stage == 2:
         model = attentionDoubleResnet(num_classes=num_classes, mem_size=memSize)
-        model.load_state_dict(torch.load(stage1_dict))
+        model.load_state_dict(torch.load(stage1Dict))
         model.train(False)
         
         for params in model.classifier.parameters():
@@ -181,13 +181,20 @@ def main_run(stage, train_data_dir, val_data_dir, stage1Dict, stage1Dict_rgb, st
         writer.add_scalar('lr', optimizer_fn.param_groups[0]['lr'], epoch+1)
         
         if stage == 2:
-            model.resNet.layer4[0].conv1.train(True)
-            model.resNet.layer4[0].conv2.train(True)
-            model.resNet.layer4[1].conv1.train(True)
-            model.resNet.layer4[1].conv2.train(True)
-            model.resNet.layer4[2].conv1.train(True)
-            model.resNet.layer4[2].conv2.train(True)
-            model.resNet.fc.train(True)
+            model.resNet1.layer4[0].conv1.train(True)
+            model.resNet1.layer4[0].conv2.train(True)
+            model.resNet1.layer4[1].conv1.train(True)
+            model.resNet1.layer4[1].conv2.train(True)
+            model.resNet1.layer4[2].conv1.train(True)
+            model.resNet1.layer4[2].conv2.train(True)
+            model.resNet2.layer4[0].conv1.train(True)
+            model.resNet2.layer4[0].conv2.train(True)
+            model.resNet2.layer4[1].conv1.train(True)
+            model.resNet2.layer4[1].conv2.train(True)
+            model.resNet2.layer4[2].conv1.train(True)
+            model.resNet2.layer4[2].conv2.train(True)
+            model.resNet1.fc.train(True)
+            model.resNet2.fc.train(True)
         
         #for i, (inputs, targets) in enumerate(train_loader):
         for inputs, inputsSN, targets in train_loader:
