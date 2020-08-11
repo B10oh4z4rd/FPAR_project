@@ -25,7 +25,7 @@ class attentionDoubleResnet(nn.Module):
             model = noAttentionModel(num_classes, mem_size)
             model.load_state_dict(torch.load(fcm))
             self.resNet2.load_state_dict(model.resNet.state_dict())
-            self.lstm_cell_y.load_state_dict(model.lstm_cell.state_dict()
+            self.lstm_cell_y.load_state_dict(model.lstm_cell.state_dict())
         self.mem_size = mem_size
         self.weight_softmax = self.resNet1.fc.weight
         
