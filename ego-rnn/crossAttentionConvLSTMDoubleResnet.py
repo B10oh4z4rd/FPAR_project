@@ -18,7 +18,7 @@ class crossAttentionDoubleResnet(nn.Module):
             model = attentionModel(num_classes, mem_size)
             model.load_state_dict(torch.load(rgbm))
             self.resNet1.load_state_dict(model.resNet.state_dict())
-            self.lstm_cell_x.load_state_dict(model.lstm_cell)
+            self.lstm_cell_x.load_state_dict(model.lstm_cell.state_dict())
         self.resNet2 = resnetMod.resnet34(True, True)
         if fcm is not None:
             model = noAttentionModel(num_classes, mem_size)
