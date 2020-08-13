@@ -293,8 +293,8 @@ def __main__():
     trainDatasetDir = args.trainDatasetDir
     valDatasetDir = args.valDatasetDir
     outDir = args.outDir
-    stage1Dict_rgb = args.stage1Dict_rgb
-    stage1Dict_fc = args.stage1Dict_fc
+    stage1Dict_rgb = args.rgbModel
+    stage1Dict_fc = args.fcModel
     stage1Dict = args.stage1Dict
     seqLen = args.seqLen
     trainBatchSize = args.trainBatchSize
