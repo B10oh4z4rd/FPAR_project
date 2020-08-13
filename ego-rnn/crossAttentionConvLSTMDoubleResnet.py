@@ -49,5 +49,5 @@ class crossAttentionDoubleResnet(nn.Module):
             state_x = self.lstm_cell_x(attentionFeat, state_x)
             
         feats1 = self.avgpool(state_x[1]).view(state_x[1].size(0), -1)
-        feats = self.classifier(feats)
+        feats = self.classifier(feats1)
         return feats, feats1
