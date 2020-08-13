@@ -48,6 +48,6 @@ class crossAttentionDoubleResnet(nn.Module):
             attentionFeat = feature_convNBN2 * attentionMAP.expand_as(feature_conv)
             state_x = self.lstm_cell_x(attentionFeat, state_x)
             
-        feats = self.avgpool(state_x[1]).view(state_x[1].size(0), -1)
+        feats1 = self.avgpool(state_x[1]).view(state_x[1].size(0), -1)
         feats = self.classifier(feats)
-        return feats
+        return feats, feats1
