@@ -45,7 +45,7 @@ class crossAttentionDoubleResnet(nn.Module):
             cam = torch.bmm(self.weight_softmax[class_idx].unsqueeze(1), feature_conv1)
             attentionMAP = F.softmax(cam.squeeze(1), dim=1)
             attentionMAP = attentionMAP.view(attentionMAP.size(0), 1, 7, 7)
-            attentionFeat = feature_convNBN2 * attentionMAP.expand_as(feature_conv)
+            attentionFeat = feature_convNBN * attentionMAP.expand_as(feature_conv)
             state_x = self.lstm_cell_x(attentionFeat, state_x)
             
         feats1 = self.avgpool(state_x[1]).view(state_x[1].size(0), -1)
