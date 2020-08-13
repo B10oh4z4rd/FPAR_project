@@ -10,7 +10,7 @@ from noAttentionConvLSTM import *
 
 class crossAttentionDoubleResnet(nn.Module):
     def __init__(self, num_classes=61, mem_size=512, rgbm = None, fcm = None):
-        super(attentionDoubleResnet, self).__init__()
+        super(crossAttentionDoubleResnet, self).__init__()
         self.num_classes = num_classes
         self.resNet1 = resnetMod.resnet34(True, True)
         self.lstm_cell_x = MyConvLSTMCell(512, mem_size)
