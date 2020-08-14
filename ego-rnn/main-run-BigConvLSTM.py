@@ -211,7 +211,7 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
             inputVariableRGB = Variable(inputsRGB.permute(1, 0, 2, 3, 4).to(device))
             inputVariableCol = Variable(inputsCol.permute(1, 0, 2, 3, 4).to(device))
             labelVariable = Variable(targets.to(device))
-            trainSamples += inputVariableRGB.size(0)
+            trainSamples += inputsRGB.size(0)
             
             output_label, _ = model(inputVariableRGB, inputVariableCol, device)
             
