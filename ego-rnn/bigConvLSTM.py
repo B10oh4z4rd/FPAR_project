@@ -34,7 +34,7 @@ class bigConvLSTM(nn.Module):
         self.weight_softmax = self.resNetRGB.fc.weight
         
         self.avgpool = nn.AvgPool2d(7)
-        self.dropout = nn.Dropout(0.7)
+        self.dropout = nn.Dropout(0.7) # 0.7
         self.fc = nn.Linear(2 * mem_size, self.num_classes)
         self.classifier = nn.Sequential(self.dropout, self.fc)
 
