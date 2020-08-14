@@ -78,41 +78,77 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
         for params in model.parameters():
             params.requires_grad = False
         #
-        for params in model.resNet.layer4[0].conv1.parameters():
+        for params in model.resNetRGB.layer4[0].conv1.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.resNet.layer4[0].conv2.parameters():
+        for params in model.resNetRGB.layer4[0].conv2.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.resNet.layer4[1].conv1.parameters():
+        for params in model.resNetRGB.layer4[1].conv1.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.resNet.layer4[1].conv2.parameters():
+        for params in model.resNetRGB.layer4[1].conv2.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        for params in model.resNet.layer4[2].conv1.parameters():
+        for params in model.resNetRGB.layer4[2].conv1.parameters():
             params.requires_grad = True
             train_params += [params]
         
-        for params in model.resNet.layer4[2].conv2.parameters():
+        for params in model.resNetRGB.layer4[2].conv2.parameters():
             params.requires_grad = True
             train_params += [params]
         #
-        for params in model.resNet.fc.parameters():
+        for params in model.resNetRGB.fc.parameters():
+            params.requires_grad = True
+            train_params += [params]
+        #
+        for params in model.resNetCol.layer4[0].conv1.parameters():
             params.requires_grad = True
             train_params += [params]
 
-        model.resNet.layer4[0].conv1.train(True)
-        model.resNet.layer4[0].conv2.train(True)
-        model.resNet.layer4[1].conv1.train(True)
-        model.resNet.layer4[1].conv2.train(True)
-        model.resNet.layer4[2].conv1.train(True)
-        model.resNet.layer4[2].conv2.train(True)
-        model.resNet.fc.train(True)
+        for params in model.resNetCol.layer4[0].conv2.parameters():
+            params.requires_grad = True
+            train_params += [params]
+
+        for params in model.resNetCol.layer4[1].conv1.parameters():
+            params.requires_grad = True
+            train_params += [params]
+
+        for params in model.resNetCol.layer4[1].conv2.parameters():
+            params.requires_grad = True
+            train_params += [params]
+
+        for params in model.resNetCol.layer4[2].conv1.parameters():
+            params.requires_grad = True
+            train_params += [params]
+        
+        for params in model.resNetCol.layer4[2].conv2.parameters():
+            params.requires_grad = True
+            train_params += [params]
+        #
+        for params in model.resNetCol.fc.parameters():
+            params.requires_grad = True
+            train_params += [params]
+
+        model.resNetRGB.layer4[0].conv1.train(True)
+        model.resNetRGB.layer4[0].conv2.train(True)
+        model.resNetRGB.layer4[1].conv1.train(True)
+        model.resNetRGB.layer4[1].conv2.train(True)
+        model.resNetRGB.layer4[2].conv1.train(True)
+        model.resNetRGB.layer4[2].conv2.train(True)
+        model.resNetRGB.fc.train(True)
+        
+        model.resNetCol.layer4[0].conv1.train(True)
+        model.resNetCol.layer4[0].conv2.train(True)
+        model.resNetCol.layer4[1].conv1.train(True)
+        model.resNetCol.layer4[1].conv2.train(True)
+        model.resNetCol.layer4[2].conv1.train(True)
+        model.resNetCol.layer4[2].conv2.train(True)
+        model.resNetCol.fc.train(True)
     
     for params in model.lstm_cell.parameters():
         params.requires_grad = True
@@ -150,13 +186,21 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
         writer.add_scalar('lr', optimizer_fn.param_groups[0]['lr'], epoch+1)
         
         if stage == 2:
-            model.resNet.layer4[0].conv1.train(True)
-            model.resNet.layer4[0].conv2.train(True)
-            model.resNet.layer4[1].conv1.train(True)
-            model.resNet.layer4[1].conv2.train(True)
-            model.resNet.layer4[2].conv1.train(True)
-            model.resNet.layer4[2].conv2.train(True)
-            model.resNet.fc.train(True)
+            model.resNetRGB.layer4[0].conv1.train(True)
+            model.resNetRGB.layer4[0].conv2.train(True)
+            model.resNetRGB.layer4[1].conv1.train(True)
+            model.resNetRGB.layer4[1].conv2.train(True)
+            model.resNetRGB.layer4[2].conv1.train(True)
+            model.resNetRGB.layer4[2].conv2.train(True)
+            model.resNetRGB.fc.train(True)
+            
+            model.resNetCol.layer4[0].conv1.train(True)
+            model.resNetCol.layer4[0].conv2.train(True)
+            model.resNetCol.layer4[1].conv1.train(True)
+            model.resNetCol.layer4[1].conv2.train(True)
+            model.resNetCol.layer4[2].conv1.train(True)
+            model.resNetCol.layer4[2].conv2.train(True)
+            model.resNetCol.fc.train(True)
         
         #for i, (inputs, targets) in enumerate(train_loader):
         for inputsRGB, inputsCol, targets in train_loader:
