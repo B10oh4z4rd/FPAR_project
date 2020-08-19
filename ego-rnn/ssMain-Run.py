@@ -169,7 +169,8 @@ def main_run(dataset,stage, trainDatasetDir, valDatasetDir, stage1_dict, stackSi
             output_label, _ , mmapPrediction = model(inputVariable)
 
             mmapPrediction = mmapPrediction.view(-1,2)         
-            inputMmap = torch.reshape(inputMmap, (-1,)).long()
+            inputMmap = torch.reshape(inputMmap, (-1,)) #.long()
+            inputMmap = torch.round(inputMmap).long() #making things black and white again
             
             '''
             print(mmapPrediction.size())
@@ -233,7 +234,8 @@ def main_run(dataset,stage, trainDatasetDir, valDatasetDir, stage1_dict, stackSi
                     output_label, _ , mmapPrediction = model(inputVariable)
 
                     mmapPrediction = mmapPrediction.view(-1,2)
-                    inputMmap = torch.reshape(inputMmap, (-1,)).long()
+                    inputMmap = torch.reshape(inputMmap, (-1,)) #.long()
+                    inputMmap = torch.round(inputMmap).long()
                     loss2 = alpha*loss_fn(mmapPrediction,inputMmap)
 
                     val_loss = loss_fn(output_label, labelVariable)

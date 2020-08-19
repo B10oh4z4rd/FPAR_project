@@ -23,7 +23,7 @@ def main_run(dataset,model_state_dict, dataset_dir, seqLen, memSize,stackSize):
     mean=[0.485, 0.456, 0.406]
     std=[0.229, 0.224, 0.225]
     normalize = Normalize(mean=mean, std=std)
-    spatial_transform = Compose([Scale(256), CenterCrop(224), ToTensor(), normalize])
+    spatial_transform = Compose([Scale(256), CenterCrop(224)])
     spatial_transorm2 = Compose([Scale((7,7)), ToTensor()])
     sequence = True
 
