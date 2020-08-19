@@ -91,7 +91,7 @@ class makeDataset(Dataset):
 
             fl_name = vid_nameY + '/flow_y_' + str(int(round(i))).zfill(5) + '.png'
             img = Image.open(fl_name)
-            img = self.spatial_transform(img)
+            img = self.spatial_transform(img.convert('L'))
             inpSeqY.append(self.spatial_transform2(img))
 
         inpSeqSegsX = torch.stack(inpSeqX, 0)#.squeeze(1)

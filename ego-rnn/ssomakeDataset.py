@@ -14,7 +14,7 @@ from spatial_transforms import (Compose, ToTensor, CenterCrop, Scale, Normalize,
 mean = [0.485, 0.456, 0.406]
 std = [0.229, 0.224, 0.225]
 normalize = Normalize(mean=mean, std=std)
-spatial_transform2 = Compose([Scale((7,7)), ToTensor()]) #normalize : was removed
+spatial_transform2 = Compose([Scale((7,7)), ToTensor()]) 
 
 def listDirectory(path):
   if os.path.isdir(path):
