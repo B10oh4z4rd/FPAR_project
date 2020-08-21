@@ -1,5 +1,5 @@
 from __future__ import print_function, division
-from attentionConvLSTMDoubleResnet import *
+from crossAttentionConvLSTMDoubleResnet import *
 from spatial_transforms import (Compose, ToTensor, CenterCrop, Scale, Normalize)
 from makeDatasetDoubleResnet import *
 from sklearn.metrics import confusion_matrix
@@ -9,7 +9,7 @@ import argparse
 import sys
 
 def main_run(model_state_dict, dataset_dir, seqLen, memSize, out_dir):
-    model_folder = os.path.join('./', out_dir, 'attConvLSTMDoubleResnet', str(seqLen))
+    model_folder = os.path.join('./', out_dir, 'attConvLSTMcrossAttention', str(seqLen))
     #dataset = 'gtea61'
     num_classes = 61
 
@@ -24,7 +24,7 @@ def main_run(model_state_dict, dataset_dir, seqLen, memSize, out_dir):
     test_loader = torch.utils.data.DataLoader(vid_seq_test, batch_size=1,
                             shuffle=False, num_workers=2, pin_memory=True)
     
-    model = attentionDoubleResnet(num_classes=num_classes, mem_size=memSize)
+    model = crossAttentionDoubleResnet(num_classes=num_classes, mem_size=memSize)
     model.load_state_dict(torch.load(model_state_dict))
     
     for params in model.parameters():
