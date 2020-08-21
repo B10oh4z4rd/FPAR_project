@@ -5,6 +5,7 @@ from PIL import Image
 import numpy as np
 import glob
 import random
+import cv2
 
 def gen_split(root_dir, stackSize, user, fmt = ".png"):
     fmt = "*" + fmt
@@ -67,6 +68,7 @@ class makeDataset(Dataset):
     
     def __getitem__(self, idx):
         vid_name = self.images[idx] + "/rgb"
+        vid_nameX = self.images[idx].replace('processed_frames2', 'flow_x_processed')
         col_name = self.images[idx] + "/" + self.color
         label = self.labels[idx]
         numFrame = self.numFrames[idx]
@@ -80,15 +82,30 @@ class makeDataset(Dataset):
             img = Image.open(fl_name)
             inpSeqRGB.append(self.spatial_transform(img.convert('RGB')))
             
-            color = None
+            #color = None
             if self.color == 'HSV_opticalFlow':
-                color = '/hsv_of_'
+                fl_name = col_name + '/hsv_of_' + str(int(np.floor(i))).zfill(4) + self.fmt
+                img = Image.open(fl_name)
+                inpSeqCol.append(self.spatial_transform(img.convert('RGB')))
+                
             elif self.color == 'flow_surfaceNormals':
-                color = '/flow_surfaceNormal_'
+                fl_name = col_name + '/flow_surfaceNormal_' + str(int(np.floor(i))).zfill(4) + self.fmt
+                img = Image.open(fl_name)
+                inpSeqCol.append(self.spatial_transform(img.convert('RGB')))
+                
             elif self.color == 'warpedHSV':
-                ### TO-DO (forse)
-                print(self.color,' is not valid')
-                exit(-1)
+                fl_name = vid_nameX + '/flow_x_' + str(int(round(i))).zfill(5) + self.fmt                    
+                flow_x = cv2.imread(fl_name,cv2.IMREAD_GRAYSCALE).astype(np.float32)
+                flow_y = cv2.imread(fl_name.replace('flow_x','flow_y'),cv2.IMREAD_GRAYSCALE).astype(np.float32)
+                
+                mag, ang = cv2.cartToPolar(flow_x, flow_y)
+                hsv = np.zeros((flow_x.shape[0],flow_x.shape[1],3)).astype(np.uint8)
+                hsv[...,1] = 255
+                hsv[...,0] = ang*180/np.pi/2
+                hsv[...,2] = cv2.normalize(mag,None,0,255,cv2.NORM_MINMAX)
+                rgb = cv2.cvtColor(hsv,cv2.COLOR_HSV2BGR)
+                im_pil = Image.fromarray(rgb)#conversion to a pil image to apply transform
+                inpSeqCol.append(self.spatial_transform(im_pil.convert('RGB')))
             elif self.color == 'colorJet':
                 ### TO-DO (forse)
                 print(self.color,' is not valid')
@@ -97,9 +114,6 @@ class makeDataset(Dataset):
                 print(self.color,' is not valid')
                 exit(-1)
             
-            fl_name = col_name + color + str(int(np.floor(i))).zfill(4) + self.fmt
-            img = Image.open(fl_name)
-            inpSeqCol.append(self.spatial_transform(img.convert('RGB')))
         
         inpSeqRGB = torch.stack(inpSeqRGB, 0)
         inpSeqCol = torch.stack(inpSeqCol, 0)
