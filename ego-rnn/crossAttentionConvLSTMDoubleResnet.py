@@ -10,7 +10,7 @@ from noAttentionConvLSTM import *
 
 class crossAttentionDoubleResnet(nn.Module):
     def __init__(self, num_classes=61, mem_size=512, rgbm = None, fcm = None):
-        super(attentionDoubleResnet, self).__init__()
+        super(crossAttentionDoubleResnet, self).__init__()
         self.num_classes = num_classes
         self.resNet1 = resnetMod.resnet34(True, True)
         self.lstm_cell_x = MyConvLSTMCell(512, mem_size)
@@ -18,7 +18,7 @@ class crossAttentionDoubleResnet(nn.Module):
             model = attentionModel(num_classes, mem_size)
             model.load_state_dict(torch.load(rgbm))
             self.resNet1.load_state_dict(model.resNet.state_dict())
-            self.lstm_cell_x.load_state_dict(model.lstm_cell)
+            self.lstm_cell_x.load_state_dict(model.lstm_cell.state_dict())
         self.resNet2 = resnetMod.resnet34(True, True)
         if fcm is not None:
             model = noAttentionModel(num_classes, mem_size)
@@ -48,6 +48,6 @@ class crossAttentionDoubleResnet(nn.Module):
             attentionFeat = feature_convNBN * attentionMAP.expand_as(feature_conv)
             state_x = self.lstm_cell_x(attentionFeat, state_x)
             
-        feats = self.avgpool(state_x[1]).view(state_x[1].size(0), -1)
-        feats = self.classifier(feats)
-        return feats
+        feats1 = self.avgpool(state_x[1]).view(state_x[1].size(0), -1)
+        feats = self.classifier(feats1)
+        return feats, feats1

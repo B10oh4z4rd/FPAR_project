@@ -43,14 +43,13 @@ def to_RGB(tensor):
       images.append(image)
     return images
 
-def grad_cam(model, inpFlow, inpFrame, heatmap_layer, truelabel=None):
-    inpFlow = inpFlow.unsqueeze(0).cuda()
+def grad_cam(model, inpFrame, heatmap_layer, truelabel=None):
     inpFramenormal = inpFrame.unsqueeze(0)
     inpFrame = inpFrame.unsqueeze(0).permute(1, 0, 2, 3, 4).cuda()
     info = InfoHolder(heatmap_layer)
     heatmap_layer.register_forward_hook(info.hook)
     
-    output, mmap = model(inpFlow,inpFrame)
+    output, _ , mmap = model(inpFrame)
     truelabel = truelabel if truelabel else torch.argmax(output)
 
     print(f'Size of the output {output.size()}')

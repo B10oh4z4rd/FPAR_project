@@ -14,33 +14,39 @@ from spatial_transforms import (Compose, ToTensor, CenterCrop, Scale, Normalize,
 mean = [0.485, 0.456, 0.406]
 std = [0.229, 0.224, 0.225]
 normalize = Normalize(mean=mean, std=std)
-spatial_transform2 = Compose([Scale((7,7)), ToTensor(), normalize])
+spatial_transform2 = Compose([Scale((7,7)), ToTensor()]) 
+
+def listDirectory(path):
+  if os.path.isdir(path):
+    return os.listdir(path)
+  
+  return []
 
 def gen_split(root_dir, stackSize):
-    DatasetX = []
-    DatasetY = []
     DatasetF = []
     Labels = []
     NumFrames = []
-    #The root directory should be flow_x_processed/train or test
+    #The root directory should be processed frames/train or test
     for dir_user in sorted(os.listdir(root_dir)):
         class_id = 0
         dir = os.path.join(root_dir, dir_user)
         for target in sorted(os.listdir(dir)):
             dir1 = os.path.join(dir, target)
-            insts = sorted(os.listdir(dir1))
+            insts = sorted(listDirectory(dir1))              
             if insts != []:
                 for inst in insts:
-                    inst_dir = os.path.join(dir1, inst)
+                    inst_dir = os.path.join(dir1,inst,'rgb')
+                    inst_dir2 = os.path.join(dir1,inst)
                     numFrames = len(glob.glob1(inst_dir, '*.png'))
+
                     if numFrames >= stackSize:
-                        DatasetX.append(inst_dir)
-                        DatasetY.append(inst_dir.replace('flow_x_processed', 'flow_y_processed'))
-                        DatasetF.append(inst_dir.replace('flow_x_processed', 'processed_frames2'))
+                        DatasetF.append(inst_dir2)
                         Labels.append(class_id)
                         NumFrames.append(numFrames)
-            class_id += 1
-    return DatasetX, DatasetY, DatasetF, Labels, NumFrames
+                class_id += 1
+    bad_lab = [x for x in Labels if x>=61]
+    #print(f'Bad labels {bad_lab}')
+    return DatasetF, Labels, NumFrames
 
 
 class makeDataset(Dataset):
@@ -53,8 +59,7 @@ class makeDataset(Dataset):
                 on a sample.
         """
 
-        self.imagesX, self.imagesY, self.imagesF, self.labels, self.numFrames = gen_split(
-            root_dir, stackSize)
+        self.imagesF, self.labels, self.numFrames = gen_split(root_dir, stackSize)
         self.spatial_transform = spatial_transform
         self.train = train
         self.numSeg = numSeg
@@ -65,53 +70,15 @@ class makeDataset(Dataset):
         self.seqLen = seqLen
 
     def __len__(self):
-        return len(self.imagesX)
+        return len(self.imagesF)
 
     def __getitem__(self, idx):
-        vid_nameX = self.imagesX[idx]
-        vid_nameY = self.imagesY[idx]
         vid_nameF = self.imagesF[idx]
         label = self.labels[idx]
         numFrame = self.numFrames[idx]
         inpSeqSegs = []
         self.spatial_transform.randomize_parameters()
-        if self.sequence is True:
-            if numFrame <= self.stackSize:
-                frameStart = np.ones(self.numSeg)
-            else:
-                frameStart = np.linspace(1, numFrame - self.stackSize, self.numSeg)
-            for startFrame in frameStart:
-                inpSeq = []
-                for k in range(self.stackSize):
-                    i = k + int(startFrame)
-                    fl_name = vid_nameX + '/flow_x_' + str(int(round(i))).zfill(5) + '.png'
-                    img = Image.open(fl_name)
-                    inpSeq.append(self.spatial_transform(img.convert('L'), inv=True, flow=True))
-                    # fl_names.append(fl_name)
-                    fl_name = vid_nameY + '/flow_y_' + str(int(round(i))).zfill(5) + '.png'
-                    img = Image.open(fl_name)
-                    inpSeq.append(self.spatial_transform(img.convert('L'), inv=False, flow=True))
-                inpSeqSegs.append(torch.stack(inpSeq, 0).squeeze())
-            inpSeqSegs = torch.stack(inpSeqSegs, 0)
-        else:
-            if numFrame <= self.stackSize:
-                startFrame = 1
-            else:
-                if self.phase == 'train':
-                    startFrame = random.randint(1, numFrame - self.stackSize)
-                else:
-                    startFrame = np.ceil((numFrame - self.stackSize)/2)
-            inpSeq = []
-            for k in range(self.stackSize):
-                i = k + int(startFrame)
-                fl_name = vid_nameX + '/flow_x_' + str(int(round(i))).zfill(5) + '.png'
-                img = Image.open(fl_name)
-                inpSeq.append(self.spatial_transform(img.convert('L'), inv=True, flow=True))
-                # fl_names.append(fl_name)
-                fl_name = vid_nameY + '/flow_y_' + str(int(round(i))).zfill(5) + '.png'
-                img = Image.open(fl_name)
-                inpSeq.append(self.spatial_transform(img.convert('L'), inv=False, flow=True))
-            inpSeqSegs = torch.stack(inpSeq, 0).squeeze(1)
+
         inpSeqF = []
         for i in np.linspace(1, numFrame, self.seqLen, endpoint=False):
             fl_name = vid_nameF +  '/' + 'rgb' +'/' + 'rgb' + str(int(np.floor(i))).zfill(4) + self.fmt
@@ -136,4 +103,4 @@ class makeDataset(Dataset):
   
         inpSeqMmaps = torch.stack(inpSeqMmaps,0)
 
-        return inpSeqSegs, inpSeqF, inpSeqMmaps ,label#, vid_nameF#, fl_name
+        return inpSeqF, inpSeqMmaps ,label#, vid_nameF#, fl_name
