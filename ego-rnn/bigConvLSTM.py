@@ -16,7 +16,7 @@ class bigConvLSTM(nn.Module):
         
         self.resNetRGB = resnetMod.resnet34(True, True)
         self.resNetCol = resnetMod.resnet34(True, True)
-        self.lstm_cell = MyConvLSTMCell(512*2, mem_size*2)
+        self.lstm_cell = MyConvLSTMCell(512*2, mem_size)
         
         if rgbm is not None:
             model = attentionModel(num_classes, mem_size)
@@ -35,16 +35,21 @@ class bigConvLSTM(nn.Module):
         
         self.avgpool = nn.AvgPool2d(7)
         self.dropout = nn.Dropout(0.7) # 0.7
-        self.fc = nn.Linear(2 * mem_size, self.num_classes)
+        self.fc = nn.Linear(mem_size, self.num_classes)
         self.classifier = nn.Sequential(self.dropout, self.fc)
 
     def forward(self, inputRGB, inputCol, device):
+        '''
         stateRGB = (Variable(torch.zeros((inputRGB.size(1), self.mem_size, 7, 7)).to(device)),
                  Variable(torch.zeros((inputRGB.size(1), self.mem_size, 7, 7)).to(device)))
         stateCol = (Variable(torch.zeros((inputCol.size(1), self.mem_size, 7, 7)).to(device)),
                  Variable(torch.zeros((inputCol.size(1), self.mem_size, 7, 7)).to(device)))
         state = (torch.cat((stateRGB[0], stateCol[0]), 1),
                 torch.cat((stateRGB[1], stateCol[1]), 1))
+        '''
+        state = (Variable(torch.zeros((inputRGB.size(1), self.mem_size, 7, 7)).to(device)),
+                 Variable(torch.zeros((inputCol.size(1), self.mem_size, 7, 7)).to(device)))
+        
         
         for t in range(inputRGB.size(0)):
             logit, feature_conv, feature_convNBN = self.resNetRGB(inputRGB[t])

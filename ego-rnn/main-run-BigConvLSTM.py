@@ -20,7 +20,7 @@ def main_run(stage, train_data_dir, val_data_dir, stage1_dict, out_dir, seqLen, 
     begin_time = datetime.datetime.now()
     num_classes = 61
     
-    if color not in ['HSV_opticalFlow', 'flow_surfaceNormals']:
+    if color not in ['HSV_opticalFlow', 'flow_surfaceNormals', 'warpedHSV']:
         print(color,' is not valid')
         exit(-1)
     
